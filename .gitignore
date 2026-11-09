@@ -1,0 +1,102 @@
+# ==============================================================================
+# Symfony
+# ==============================================================================
+
+###> symfony/framework-bundle ###
+/.env
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/
+/public/bundles/
+/public/storage/
+/storage/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+/.phpunit.result.cache
+###< phpunit/phpunit ###
+
+###> symfony/asset-mapper ###
+/public/assets/
+/assets/vendor/
+###< symfony/asset-mapper ###
+
+###> symfony/mailer ###
+/.mailer/
+###< symfony/mailer ###
+
+# ==============================================================================
+# Environment files - never commit secrets
+# ==============================================================================
+# .env.dev contains a real APP_SECRET -> keep it out of the repository.
+# .env.test only holds the public Symfony test placeholder -> safe to commit.
+# Real credentials belong in .env.local / .env.$env.local, which are ignored.
+# .env.example (when added) must contain NO secret and SHOULD be committed.
+/.env.dev
+/.env.prod
+/.env.prod.local
+/.env.*.local
+.env.local.php
+*.local.php
+
+# Symfony CLI local configuration
+/.symfony.local.yaml
+/.symfony.local.php
+
+# ==============================================================================
+# Secrets, private keys & credentials
+# ==============================================================================
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.secret
+config/jwt/
+config/secrets/
+
+# ==============================================================================
+# Dependencies & build artifacts
+# ==============================================================================
+/node_modules/
+/assets/node_modules/
+/public/build/
+*.log
+*.cache
+
+# ==============================================================================
+# Database dumps & backups (may contain private data)
+# ==============================================================================
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.backup
+
+# ==============================================================================
+# Local development / IDE / OS
+# ==============================================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+.project
+.settings/
+
+# ==============================================================================
+# Tooling caches
+# ==============================================================================
+.php-cs-fixer.cache
