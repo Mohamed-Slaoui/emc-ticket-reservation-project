@@ -209,12 +209,16 @@ The diagram describes the tables, primary keys (`PK`), foreign keys (`FK`), and 
 | `seating_layout` | `UNIQUE (room_id, version)` | A version is unique within its room. |
 | `layout_zone` | `UNIQUE (seating_layout_id, code)` | A zone code is unique within its configuration. |
 | `layout_place` | `UNIQUE (seating_layout_id, place_id)` | A seat appears only once per configuration. |
-| `performance_price` | `UNIQUE (performance_id, layout_zone_id, tariff_id, version)` | A single current price per combination. |
+| `performance_price` | `UNIQUE (performance_id, layout_zone_id, tariff_id, version)` | One price row per combination and version. |
+| `performance_price` | `UNIQUE (current_combo)` on a generated column | **A single current price per combination** — the column materialises the combination only for the current row, so the retired versions (NULL) stay unconstrained. |
 | `performance_place` | `UNIQUE (performance_id, layout_place_id)` | **One inventory row per seat per performance** (anti double-selling). |
+| `performance_place` | `CHECK (status, current_reservation_id, hold_expires_at)` | The state invariant of §5.4, enforced by the database and not only by the entity. |
+| `booking_policy` | `UNIQUE (singleton)` | A single policy row: the hold duration is never ambiguous. |
 | `reservation` | `UNIQUE (reference)` | Unique reservation reference. |
 | `reservation_item` | `UNIQUE (reservation_id, performance_place_id)` | The same seat appears only once in a reservation. |
 | `ticket` | `UNIQUE (reservation_item_id)`, `UNIQUE (ticket_number)`, `UNIQUE (qr_token)` | One ticket per item, unique references. |
 | `user` | `UNIQUE (email)` | One account per email. |
+| `tariff` | `UNIQUE (code)` | One row per tariff code. |
 | `outbox_message` | `UNIQUE (idempotency_key)` | Idempotent integration event. |
 
 ### 5.3 Cross-cutting rules (beyond foreign keys)
@@ -241,6 +245,12 @@ This is the table that prevents double-selling.
 | `BLOCKED` | `NULL` | `NULL` |
 
 Any transition must respect this consistency (for example, no `HELD` without an expiration date).
+
+This consistency is enforced in **two** places:
+
+- by the entity, whose transition methods are the only writers of the trio;
+- by the database, through the constraint `ck_performance_place_state` — an inconsistent row
+  cannot be written even outside the entity API.
 
 ---
 

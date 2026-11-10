@@ -14,6 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 #[ORM\Entity(repositoryClass: \App\Repository\BookingPolicyRepository::class)]
 #[ORM\Table(name: 'booking_policy')]
+#[ORM\UniqueConstraint(name: 'uk_booking_policy_singleton', columns: ['singleton'])]
 class BookingPolicy
 {
     #[ORM\Id]
@@ -23,6 +24,24 @@ class BookingPolicy
 
     #[ORM\Column(type: 'integer')]
     private int $holdDurationMinutes;
+
+    /**
+     * Always equal to 1, and protected by a unique key: a **second** policy
+     * row cannot exist, so the hold duration is never ambiguous.
+     *
+     * The column is never written by the application (`insertable` and
+     * `updatable` are false): the database default 1 applies on every
+     * insert, and no code path can change it.
+     */
+    #[ORM\Column(
+        name: 'singleton',
+        type: 'boolean',
+        nullable: false,
+        insertable: false,
+        updatable: false,
+        options: ['default' => true],
+    )]
+    private bool $singleton = true;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: true)]

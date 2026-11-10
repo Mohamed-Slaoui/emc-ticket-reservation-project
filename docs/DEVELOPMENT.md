@@ -267,6 +267,7 @@ Carried forward from the Phase 0 inspection. Each one names its target phase.
 | F5 | Performances were compared by object identity. | **Phase 1** — the comparison uses the identifier. |
 | F9 | A blocked seat could be held, and releasing it put it back on sale. | **Phase 1** — `hold()` rejects it, `release()` keeps it out of sale. |
 | F10 | The `EntityManager` was orphaned by the fixture bootstrap. | **Phase 1** — resolved lazily, through `DoctrineTestTrait`. |
+| F11 | The schema did not deliver the guarantees the model promised: several current prices could coexist for one combination, the inventory state invariant was PHP-only, and a second booking-policy row was possible. | **Phase 1 (patch)** — migration `Version20261110221207` adds a generated-column unique key on `performance_price`, the `ck_performance_place_state` check constraint, and a unique key on `booking_policy.singleton`. |
 
 ---
 
