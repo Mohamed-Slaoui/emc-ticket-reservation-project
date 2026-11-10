@@ -6,8 +6,8 @@
 | **Application** | Online and box-office ticketing for a 400-seat venue |
 | **Stack** | Symfony 7.4 · PHP 8.2+ · MySQL 8 · Doctrine ORM · Migrations |
 | **Model version** | **2.0 - validated on 2026-11-09** |
-| **Status** | Design complete, implementation not started |
-| **Related documents** | [`docs/DECISIONS.md`](DECISIONS.md) · [`README.md`](../README.md) |
+| **Status** | Design complete — implementation in progress (see [`docs/DEVELOPMENT.md`](DEVELOPMENT.md) §17) |
+| **Related documents** | [`docs/DECISIONS.md`](DECISIONS.md) · [`docs/WORKFLOWS.md`](WORKFLOWS.md) · [`docs/DEVELOPMENT.md`](DEVELOPMENT.md) · [`README.md`](../README.md) |
 
 ---
 
@@ -398,5 +398,7 @@ To stay realistic within seven days, the following are **explicitly out of scope
 ## 11. See also
 
 - [`docs/DECISIONS.md`](DECISIONS.md) - dated decision log and answers to the "Questions to settle".
-- [`README.md`](../README.md) - subject, levels reached, and launch instructions.
-- [`INSTALL.md`](../INSTALL.md) - step-by-step installation guide (to be produced for level 5).
+- [`docs/WORKFLOWS.md`](WORKFLOWS.md) - the approved business workflows, transcribed from the sequence diagrams.
+- [`docs/DEVELOPMENT.md`](DEVELOPMENT.md) - roadmap, coding conventions, technical foundation and known issues.
+- [`README.md`](../README.md) - project overview, stack, installation and development progress.
+- [`INSTALL.md`](../INSTALL.md) - step-by-step installation guide (delivered with the deployment phase).

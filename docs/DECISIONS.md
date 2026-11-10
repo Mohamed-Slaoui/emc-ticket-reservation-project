@@ -45,6 +45,31 @@ Validated the following rules (detailed in section 3):
 - Reduced tariff: **verified by box office/admin**, no online self-declaration.
 - Google Sheets: **one row per ticket**, asynchronous idempotent synchronization.
 
+### 2026-11-10 - Phase 0: technical foundation
+
+Repository inspection, environment verification and the documentation baseline. No business
+rule was changed by this phase.
+
+- **Decision:** keep **MySQL 8** as the only database target, and drop the PostgreSQL
+  leftovers of the Symfony recipe (`identity_generation_preferences`, the `postgres:16`
+  service, the `5432` port override).
+  - *Justification:* the challenge mandates MySQL 8, and the schema relies on MySQL
+    behaviour (ENUM mapping, row locking, `TRUNCATE` with foreign keys). A single target
+    also avoids an untested second platform.
+- **Decision:** commit `.env` (non-secret defaults) and add `.env.example`; keep
+  `.env.local`, `.env.*.local` and `.env.dev` ignored.
+  - *Justification:* `.env` was gitignored while being **mandatory to boot** — a fresh
+    clone aborted with `PathException: Unable to read the ".env" environment file`.
+    Symfony's own recipe only ignores `.env.local*`, never `.env`. The committed `.env`
+    holds only placeholders; real credentials stay in `.env.local`.
+- **Decision:** the test suite runs against **MySQL only**, with no SQLite fallback.
+  - *Justification:* the migration and the constraint tests exercise MySQL-specific
+    behaviour; a second database backend would give false confidence.
+- **Decision:** use a **transactional outbox** (already validated on 2026-11-09) rather
+  than dispatching a Messenger message directly from the sale.
+  - *Justification:* the outbox row is written in the same transaction as the sale, so a
+    Google Sheets outage can neither block nor roll back a successful sale (INV-12).
+
 ---
 
 ## 2. Answers to the "Questions to settle"
@@ -223,3 +248,6 @@ These points are **excluded** from the first version to guarantee a solid delive
 | Price snapshots | 2026-11-09 | [`MODELE.md`](MODELE.md) |
 | Answers to the "Questions to settle" | 2026-11-09 | Section 2 of this document |
 | Hold, payment, refund, and tariff rules | 2026-11-09 | Sections 3 and 4 of this document |
+| MySQL 8 as the only database target; `.env` committed | 2026-11-10 | Section 1 — Phase 0 entry |
+| Phase roadmap, conventions and known issues | 2026-11-10 | [`DEVELOPMENT.md`](DEVELOPMENT.md) |
+| Approved business workflows | 2026-11-10 | [`WORKFLOWS.md`](WORKFLOWS.md) |

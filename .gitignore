@@ -3,7 +3,11 @@
 # ==============================================================================
 
 ###> symfony/framework-bundle ###
-/.env
+# NOTE: /.env is intentionally NOT ignored.
+# It holds only non-secret defaults (placeholders) and MUST be committed,
+# otherwise a fresh clone cannot boot: Symfony's Dotenv aborts with
+# "Unable to read the .env environment file".
+# Real credentials and environment-specific values belong in .env.local.
 /.env.local
 /.env.local.php
 /.env.*.local
