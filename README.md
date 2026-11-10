@@ -8,7 +8,7 @@ built for the **PFE Challenge EMC**.
 | **Subject** | **Subject 1 of 4 — Performance Venue Ticketing** |
 | **Stack** | Symfony 7.4 · PHP 8.2+ · MySQL 8 · Doctrine ORM · Migrations · Twig |
 | **Deadline** | Sunday, November 15, 2026 at 23:59 (Morocco time) |
-| **Status** | 🟡 **Phase 0 complete — core domain model in progress** |
+| **Status** | 🟡 **Phase 1 complete — core domain model in place** |
 
 ---
 
@@ -207,23 +207,22 @@ docker compose up -d database
 # 3. Create the database
 php bin/console doctrine:database:create
 
-# 4. Apply the migrations        ← available once the domain model lands (Phase 1)
+# 4. Apply the migrations
 php bin/console doctrine:migrations:migrate
 
-# 5. Load the demo data          ← available once the fixtures land (Phase 1)
+# 5. Load the demo data (venue, 400 seats, tariffs, demo accounts)
 php bin/console doctrine:fixtures:load
 
 # 6. Run the application
 php -S localhost:8000 -t public
 ```
 
-> **Current state (Phase 0).** The application **boots and serves** after steps 1–3 and 6.
-> Steps 4 and 5 depend on the domain model, which is delivered in Phase 1 — the schema and
-> the demo data do not exist yet. Until then, `doctrine:migrations:migrate` correctly
-> reports *"there are no registered migrations"*.
->
-> The full installation guide — including a from-scratch environment, Docker images and
-> troubleshooting — is delivered in the deployment phase (`INSTALL.md`).
+The application is then reachable on <http://localhost:8000>, and Mailpit on
+<http://localhost:8025>.
+
+> **Current state (Phase 1).** The schema and the demo data exist: steps 1–6 all work from
+> a fresh clone. The application has **no interface yet** — the HTTP layer arrives in
+> Phase 2 and later.
 
 ## 11. Environment configuration
 
@@ -273,9 +272,10 @@ The suite runs against **MySQL 8** — there is no SQLite fallback, because the 
 depends on MySQL-specific behaviour. The database must therefore be running first
 (`docker compose up -d database`).
 
-> **Current state (Phase 0).** The domain model and its tests are delivered in Phase 1, so
-> the suite is currently empty and PHPUnit reports *"No tests executed!"*. The test
-> harness itself (`tests/bootstrap.php`, `phpunit.dist.xml`) is already in place.
+> **Current state (Phase 1).** The suite covers the domain model: entity mapping and
+> relationships, enumeration values, the `PerformancePlace` state invariants, the
+> reservation / payment / ticket / refund lifecycles, and the database uniqueness
+> constraints. The HTTP-level suites arrive with the first interface (Phase 3).
 
 ## 14. Running the asynchronous workers
 
@@ -325,8 +325,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 
 | Phase | Description | Status |
 |---|---|---|
-| 0 | Project inspection | **Review required** |
-| 1 | Core domain foundation | Pending |
+| 0 | Project inspection | **Completed** |
+| 1 | Core domain foundation | **Review required** |
 | 2 | Authentication and authorization | Pending |
 | 3 | Venue and room administration | Pending |
 | 4 | Seating layouts and zones | Pending |
@@ -347,15 +347,22 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 **What exists today**
 
 - The Symfony 7.4 skeleton, the MySQL 8 Docker stack and the environment configuration.
-- The complete, approved data model — diagrams, entity relationships, constraints and
-  business rules — in [`docs/`](docs/).
+- **The complete domain model** — 19 entities, 13 enumerations, 19 repositories, the
+  initial migration and the demo data (one venue, one room, 400 seats, three zones, the
+  four tariffs, three accounts, the booking policy).
+- The domain rules enforced at the **entity** level: the `PerformancePlace` state
+  invariant, the reservation / payment / ticket / refund lifecycles, the price snapshots,
+  and the refund cap.
+- The uniqueness rules enforced at the **database** level and proven by integration tests.
+- 81 automated tests, all green.
 - The project roadmap, conventions and known issues in
   [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 **What comes next**
 
-Phase 1 implements the core domain foundation: the Doctrine entities, the enumerations,
-the migration and the tests that prove the model is correct.
+Phase 2 establishes the identity layer: authentication, password hashing, the role
+hierarchy (`CUSTOMER`, `BOX_OFFICE`, `ADMIN`) and the ownership checks that protect a
+customer's reservations.
 
 ## 18. Known limitations and MVP boundaries
 

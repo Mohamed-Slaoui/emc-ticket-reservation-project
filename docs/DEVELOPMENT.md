@@ -102,7 +102,9 @@ The PHP application container is **not** part of the Compose stack yet — it is
 ├── tests/
 │   ├── Unit/                # Isolated business rules
 │   ├── Integration/         # Repositories, persistence, transactions
-│   └── Functional/          # HTTP routes, forms, authorization
+│   ├── Functional/          # HTTP routes, forms, authorization
+│   ├── DoctrineTestTrait.php # Shared kernel + test-database bootstrap
+│   └── bootstrap.php
 ├── translations/            # Translation catalogues
 ├── compose.yaml             # MySQL 8 + Mailpit
 └── .env / .env.example      # Environment configuration
@@ -168,8 +170,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 
 | Phase | Description | Status |
 |---|---|---|
-| 0 | Project inspection and technical foundation | **Review required** |
-| 1 | Core domain foundation (entities, enums, migration) | Pending |
+| 0 | Project inspection and technical foundation | **Completed** |
+| 1 | Core domain foundation (entities, enums, migration) | **Review required** |
 | 2 | Authentication, users and authorisation | Pending |
 | 3 | Venue, room and physical place administration | Pending |
 | 4 | Seating layout and zone management | Pending |
@@ -234,6 +236,9 @@ composer validate
 > `doctrine:migrations:migrate` reports *"there are no registered migrations"* and
 > PHPUnit reports *"No tests executed!"* — both are the **expected** Phase 0 state, not
 > failures. The commands become meaningful as soon as Phase 1 lands.
+>
+> **Since Phase 1**, all the commands above are effective: the schema is created by the
+> migration, the fixtures populate the demo data, and the suite runs 81 tests.
 
 ---
 
@@ -243,14 +248,25 @@ Carried forward from the Phase 0 inspection. Each one names its target phase.
 
 | # | Issue | Impact | Target |
 |---|---|---|---|
-| F1 | ~~`.env` was gitignored while being mandatory to boot~~ — **fixed in Phase 0** by committing `.env` and adding `.env.example`. | Fresh clone could not start. | — |
 | F2 | `ext-intl` is not installed; `symfony/intl` currently relies on its polyfills. | Locale-dependent behaviour may differ from production. | Phase 16 |
 | F3 | `ext-gd` is not installed. | PDF/QR rendering (Phase 11) will need it. | Phase 16 |
-| F4 | A `Payment` does not own its `Refund` collection, so the "successful refunds ≤ captured amount" cap is not enforced while objects are only in memory. | Financial rule can be bypassed inside a single request. | Phase 1 (entity contract) + Phase 10 (service) |
-| F5 | `PerformancePlace::hold()` compares performances by **object identity** rather than by identifier, so two instances of the same row are treated as different performances. | Spurious allocation failures. | Phase 1 |
+| F4 | ~~A `Payment` did not own its `Refund` collection, so the refund cap was not enforced in memory~~ — **fixed in Phase 1**: the refund registers itself on its payment, and both the successful and the pending refunds are counted against the captured amount. | Financial rule could be bypassed inside a single request. | — |
+| F5 | ~~`PerformancePlace::hold()` compared performances by object identity~~ — **fixed in Phase 1**: the comparison is made on the identifier, with a fallback to object identity for entities that are not persisted yet. | Spurious allocation failures. | — |
+| F9 | ~~A `BLOCKED` seat could still be held, and releasing one silently put it back on sale~~ — **fixed in Phase 1**: `hold()` rejects a blocked seat, and `release()` only frees the allocation while keeping the seat out of sale. | An out-of-sale seat could be sold. | — |
+| F10 | The `EntityManager` was captured in `setUp()` **before** the fixtures were loaded, and `loadFixtures()` rebooted the kernel — which orphans the manager and makes Doctrine report detached entities as "non-persisted new entities". | Two integration tests failed for a reason unrelated to the domain. | — |
 | F6 | No static analysis (PHPStan) or code-style tool (ECS / PHP-CS-Fixer) is configured. | Quality gate is limited to PHPUnit. | Phase 15 |
 | F7 | `templates/base.html.twig` still contains the Symfony demo favicon and the `hello` Stimulus controller. | Cosmetic; not project-specific. | Phase 3 |
 | F8 | The Docker stack has no PHP application container. | The app must be run from the host. | Phase 16 |
+
+### 6.1 Issues already resolved
+
+| # | Issue | Resolution |
+|---|---|---|
+| F1 | `.env` was gitignored while being mandatory to boot. | **Phase 0** — `.env` is committed and `.env.example` added. |
+| F4 | The refund cap was not enforced in memory. | **Phase 1** — the refund registers itself on its payment. |
+| F5 | Performances were compared by object identity. | **Phase 1** — the comparison uses the identifier. |
+| F9 | A blocked seat could be held, and releasing it put it back on sale. | **Phase 1** — `hold()` rejects it, `release()` keeps it out of sale. |
+| F10 | The `EntityManager` was orphaned by the fixture bootstrap. | **Phase 1** — resolved lazily, through `DoctrineTestTrait`. |
 
 ---
 
