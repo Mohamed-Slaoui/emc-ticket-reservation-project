@@ -352,8 +352,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 1 | Core domain foundation | **Completed** |
 | 2 | Authentication and authorization | **Completed** |
 | 3 | Venue and room administration | **Completed** |
-| 4 | Seating layouts and zones | **Review required** |
-| 5 | Events and performances | Pending |
+| 4 | Seating layouts and zones | **Completed** |
+| 5 | Events and performances | **Review required** |
 | 6 | Tariffs and pricing | Pending |
 | 7 | Reservation foundation | Pending |
 | 8 | Customer booking | Pending |
@@ -392,11 +392,14 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 - **The seating layouts** — the **versioned configurations** of a room: the zones that
   group its seats, and the **seat map** that draws the room and maps each seat to a zone.
   A configuration used by a performance is frozen — any evolution creates a new version.
+- **The events and their performances** — a programme, its dated shows, the configuration
+  each show sells and the **inventory** it generates. An event is published only when it is
+  complete: the administration shows the four checks and the reason when one fails.
 
 **What comes next**
 
-Phase 5 opens the programming: the events, their performances, and the choice of the
-configuration each performance sells.
+Phase 6 opens the pricing: the four tariffs, and the price of each tariff for each zone
+of each performance.
 
 ## 18. Known limitations and MVP boundaries
 

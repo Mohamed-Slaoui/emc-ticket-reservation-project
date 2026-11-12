@@ -93,6 +93,57 @@
 }
 
 /* --------------------------------------------------------------------------
+   The checklist — the publication checks of an event.
+   -------------------------------------------------------------------------- */
+
+.checklist {
+    display: flex;
+    flex-direction: column;
+}
+
+.checklist__item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.checklist__item:last-child {
+    border-bottom: 0;
+}
+
+.checklist__mark {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: none;
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    color: var(--text-muted);
+}
+
+.checklist__item--ok .checklist__mark {
+    background: var(--accent-light);
+    color: var(--success);
+}
+
+.checklist__item--ko .checklist__mark {
+    background: rgba(217, 83, 79, 0.10);
+    color: var(--danger);
+}
+
+.checklist__label {
+    font-weight: var(--weight-medium);
+}
+
+.checklist__detail {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
    The map itself.
    -------------------------------------------------------------------------- */
 

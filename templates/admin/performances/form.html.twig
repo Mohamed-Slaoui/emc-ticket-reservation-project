@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ performance ? 'Edit the performance' : 'Schedule a performance' }}{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: performance ? 'Edit the performance' : 'Schedule a performance',
+        subtitle: performance
+            ? 'Change the date, the sales hours of the show.'
+            : 'The configuration generates the inventory: one sellable seat per seat of the configuration.',
+        action_label: 'Back to the event',
+        action_path: path('admin_events_show', {id: event.id}),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    {% include '_components/flash.html.twig' %}
+
+    {% set form %}
+        {{ form_start(form, {attr: {class: 'form'}}) }}
+            {{ form_row(form.layout) }}
+            {{ form_row(form.startsAt) }}
+            {{ form_row(form.endsAt) }}
+
+            <div class="form__grid">
+                {{ form_row(form.salesOpenAt) }}
+                {{ form_row(form.salesCloseAt) }}
+            </div>
+
+            <div class="form__actions">
+                <button type="submit" class="button button--primary">
+                    {{ performance ? 'Save the changes' : 'Schedule the performance' }}
+                </button>
+                <a class="button button--ghost" href="{{ path('admin_events_show', {id: event.id}) }}">Cancel</a>
+            </div>
+        {{ form_end(form) }}
+    {% endset %}
+
+    {% include '_components/card.html.twig' with { body: form } %}
+{% endblock %}

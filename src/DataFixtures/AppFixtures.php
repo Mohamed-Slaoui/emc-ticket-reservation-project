@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\BookingPolicy;
+use App\Entity\Event;
 use App\Entity\LayoutPlace;
 use App\Entity\LayoutZone;
 use App\Entity\Place;
@@ -10,6 +11,7 @@ use App\Entity\Room;
 use App\Entity\SeatingLayout;
 use App\Entity\Tariff;
 use App\Entity\Venue;
+use App\Enum\EventType;
 use App\Enum\PlaceType;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -98,6 +100,13 @@ class AppFixtures extends Fixture
         $manager->persist(new Tariff('REDUIT', 'Tarif réduit', true)); // supporting document verified in person
         $manager->persist(new Tariff('GROUPE', 'Tarif groupe')); // BR-12: minimum 5 seats, enforced by services
         $manager->persist(new Tariff('INVITATION', 'Invitation'));
+
+        // A programme, still a draft: the administrator schedules its
+        // performances (§4.1, steps 5 and 6). The demo configuration is
+        // deliberately left editable — a configuration used by a
+        // performance is frozen.
+        $event = new Event('Soirée de gala', EventType::Theatre, 'Un spectacle de gala au théâtre.');
+        $manager->persist($event);
 
         // Demo accounts (roles per docs/DECISIONS.md §3.8).
         $admin = $this->createUser(self::USER_ADMIN_EMAIL, 'Yassine', 'El Amrani', [User::ROLE_ADMIN]);

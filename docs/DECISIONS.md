@@ -119,6 +119,36 @@ The five questions from the specification, with the chosen answer and its justif
 - Confirmed reservations move to `CANCELLED` and trigger a full refund.
 - **History is preserved**: no deletion, to maintain accounting and traceability.
 
+### 2026-11-12 - Scheduling: the room is booked, not the configuration
+
+- **Question:** two performances could be scheduled on the same configuration at the same
+  time. The room was then double-booked.
+- **Decision:** a room cannot host two overlapping performances. The constraint applies to
+  the **physical room**, reached through `Performance → SeatingLayout → Room`.
+- **Justification.** The configuration is the *arrangement* of the seats; the room is the
+  *resource*. Two performances of two different configurations of the same room conflict
+  exactly as much as two performances of the same configuration, so a check on
+  `seating_layout_id` would have missed the real conflict. The room stays derived — no
+  `RoomReservation` entity: the booking is a fact about the performance, not a separate
+  aggregate, and duplicating it would risk the two drifting apart.
+- **Decision:** the interval is **half-open** — a show ending at 14:00 and a show
+  starting at 14:00 do not overlap. **No turnaround gap** is required in the MVP: the
+  preparation time between two shows is a venue decision, not a modelling one.
+- **Decision:** the check runs **inside a transaction, after locking the room row**
+  (`SELECT … FOR UPDATE`). The lock is taken before the check, so two administrators
+  scheduling the same room at the same instant are serialised. A check without the lock
+  is a snapshot, not a guarantee — the same reasoning as the row lock of the seats
+  (`MODELE.md` §7).
+- **Decision:** a **cancelled** performance does not occupy the room, and a show without
+  an end date occupies it indefinitely after its start.
+- **Decision:** the end of a show must be **strictly after** its start. A show crossing
+  midnight is written with the explicit next-day date — the administrator chooses, the
+  application never guesses.
+- **Decision:** the sale must close when the show starts (`sales_close_at <= starts_at`).
+- **Impact:** the layout selector and the performances table now show the room, and the
+  refusal names the room, the conflicting show and its interval. The conflict check lives
+  in `PerformanceService` — the single authority, used by the creation and the update.
+
 ### Q5. Who is allowed to sell which tariff?
 
 > **Answer: Rights depend on the tariff and the role. The online channel is reserved for the full tariff; reduced, group, and invitation tariffs go through the box office or an admin.**

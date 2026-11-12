@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ event ? 'Edit the event' : 'New event' }}{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: event ? 'Edit the event' : 'New event',
+        subtitle: event
+            ? 'Change the title, the type or the description of the programme.'
+            : 'Create the programme, then schedule its performances.',
+        action_label: 'Back to the events',
+        action_path: path('admin_events'),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    {% include '_components/flash.html.twig' %}
+
+    {% set form %}
+        {{ form_start(form, {attr: {class: 'form'}}) }}
+            {{ form_row(form.title) }}
+            {{ form_row(form.type) }}
+            {{ form_row(form.description) }}
+
+            <div class="form__actions">
+                <button type="submit" class="button button--primary">
+                    {{ event ? 'Save the changes' : 'Create the event' }}
+                </button>
+                <a class="button button--ghost" href="{{ path('admin_events') }}">Cancel</a>
+            </div>
+        {{ form_end(form) }}
+    {% endset %}
+
+    {% include '_components/card.html.twig' with { body: form } %}
+{% endblock %}

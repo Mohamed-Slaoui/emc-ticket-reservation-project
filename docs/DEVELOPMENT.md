@@ -220,6 +220,12 @@ Rules:
 - Test data is deterministic and shared through `src/DataFixtures`.
 - The suite must be runnable against MySQL 8 — no SQLite fallback, because the schema
   depends on MySQL-specific behaviour.
+- A **concurrency** guarantee is only proven by a test that really runs concurrently: a
+  sequential test proves nothing. `ConcurrentSchedulingTest` spawns **two processes** that
+  wait for the same barrier and then schedule an overlapping performance in the same
+  room; exactly one of them may succeed. The helper it spawns lives in
+  `tests/Fixtures/`. A test like that is only worth keeping if it **fails** when the
+  guarantee is removed — check it before believing it.
 
 ### 4.3 Symfony 7 — the traps worth remembering
 
@@ -239,6 +245,7 @@ rediscover them.
 | `assertResponseIsSuccessful()` takes a **message**, not a URI | The URI is silently used as the failure message. | Use `$client->followRedirect()` and assert the path. |
 | `InputBag::getInt()` **throws** on an empty value | A filter form submits `room=` when "every room" is chosen, and the screen answers **400** ("Input value \"room\" is invalid and flag \"FILTER_NULL_ON_FAILURE\" was not set"). | Read the parameter as a **string** and cast it by hand: `(int) $request->query->getString('room')`. `getString()` does not filter. |
 | The CSRF tokens `submit`, `authenticate` and `logout` are **stateless** by default | They are validated with a double-submit cookie and a header. A plain form posts its token *before* the script rewrites it, so the sign in falls back on the `Origin` header — and it fails as soon as the session has recorded another strategy. | The application keeps its state in the session, so its tokens are kept there too: `stateless_token_ids: []` in `config/packages/csrf.yaml`. |
+| A **pessimistic lock** needs an open transaction | `find($class, $id, LockMode::PESSIMISTIC_WRITE)` outside a transaction throws, and the lock would be released immediately anyway. | The lock is taken inside `EntityManager::wrapInTransaction()`, before the check it protects. |
 
 ### 4.4 The lists — pagination
 
@@ -274,7 +281,33 @@ version** — the old one keeps the seats it sold.
 | Deleting a configuration removes its **seat map and its zones** first — the foreign keys are strict. | `SeatingLayoutService::delete()` |
 | A room that holds a configuration cannot be deleted. | `RoomService::delete()` |
 
-### 4.6 The cascading deletions
+### 4.6 The events and their performances
+
+An **event** is a programme; a **performance** is one of its dated shows. A performance uses
+**exactly one** seating configuration, and that configuration generates its **inventory**:
+one sellable seat per seat of the configuration.
+
+| Rule | Where |
+|---|---|
+| The inventory is generated when the performance is scheduled — never by hand. | `PerformanceService::generateInventory()` |
+| A seat the configuration marks as unavailable is generated **blocked**: it is not on sale, but it stays in the configuration. | `PerformanceService` |
+| An event is **published** only when it is complete. The checks are shown to the administrator. | `EventService::publicationChecks()` |
+| A performance that already holds a sale cannot be deleted — it is cancelled instead. | `PerformanceService::delete()` |
+| An event that has performances is **kept**: the shows are the programme itself, and deleting them is a deliberate act. | `EventService::delete()` |
+| A **room** cannot host two overlapping performances — whichever configuration they use. The room is reached through the configuration. | `PerformanceService::assertRoomIsFree()` |
+| The intervals are **half-open**: a show ending at 14:00 and a show starting at 14:00 do not overlap. A show without an end date occupies the room indefinitely. | `PerformanceRepository::findOverlappingInRoom()` |
+| The room row is **locked before** the conflict is checked, inside a transaction: two simultaneous schedulings cannot both pass. | `PerformanceService::lockRoom()` |
+| The end of a show must be **strictly after** its start, and the sale must close when the show starts. | `PerformanceService::assertScheduleIsCoherent()` |
+
+The publication checks are the four of the workflow:
+
+1. the event has a performance;
+2. the performance has a configuration;
+3. the inventory is generated;
+4. the prices are set — **this one arrives with the pricing phase (Phase 6)**, so an event
+   cannot be published before then. The check is already in place and reports it.
+
+### 4.7 The cascading deletions
 
 The foreign keys are strict, so a deletion removes **what it holds**, in this order:
 
@@ -318,8 +351,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 1 | Core domain foundation (entities, enums, migration) | **Completed** |
 | 2 | Authentication, users and authorisation | **Completed** |
 | 3 | Venue, room and physical place administration | **Completed** |
-| 4 | Seating layout and zone management | **Review required** |
-| 5 | Events and performances | Pending |
+| 4 | Seating layout and zone management | **Completed** |
+| 5 | Events and performances | **Review required** |
 | 6 | Tariffs and performance pricing | Pending |
 | 7 | Inventory availability and reservation foundation | Pending |
 | 8 | Customer booking experience | Pending |
@@ -422,6 +455,10 @@ Carried forward from the Phase 0 inspection. Each one names its target phase.
 | F19 | Deleting a configuration failed with a **foreign key violation**: its zones and its seat map still referenced it. | **Phase 4** — the deletion removes the seat map and the zones first. The same guard was added to the room, which could not be deleted while it held a configuration. |
 | F20 | The sign in answered *"Invalid CSRF token"* once the session had recorded another CSRF strategy. The `submit`, `authenticate` and `logout` tokens were **stateless** (double-submit cookie + header), but a plain form posts its token before the script rewrites it — so the sign in fell back on the `Origin` header and broke as soon as a Turbo submission had used the cookie. | **Phase 4** — the tokens are stored in the session (`config/packages/csrf.yaml`), and the sign in and the sign out are plain navigations. |
 | F21 | A venue, a room or a place could not be deleted as soon as it held something: the foreign keys are strict, and the administration refused the deletion instead of removing what it held. | **Phase 4** — the deletions cascade: a venue takes its rooms, their configurations and their seats; a room takes its configurations and its seats; a place leaves the configurations it was mapped in. Only what a performance has already sold survives, and the confirmation warns about it. |
+| F22 | The event form was named `EventType`, like the enumeration it uses, and the route parameter `eventId` did not map to the `$event` argument. | **Phase 5** — the enumeration is referenced by its fully qualified name, and the parameter is mapped with `#[MapEntity(id: 'eventId')]`. |
+| F23 | The demo data had no event, and a fixture that queried the database before flushing found nothing: the inventory of the performance was empty. | **Phase 5** — the demo data holds a draft event, and the fixture flushes before it queries. |
+| F24 | Deleting an event that had a performance answered **500**: the foreign key of the performances is strict. | **Phase 5** — the deletion is refused with a clear alert ("This event has N performances: delete them first"), and the performances are deleted one by one, each with its inventory. |
+| F25 | Two performances could be scheduled on the same room at the same time: the room was double-booked, and nothing in the model forbade it. | **Phase 5** — the room is derived through the configuration, the room row is locked, and the scheduling is refused when the room is occupied. |
 
 ---
 

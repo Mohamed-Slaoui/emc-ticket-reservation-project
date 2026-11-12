@@ -47,6 +47,7 @@ These apply to every workflow. They are not repeated in each section.
 | INV-10 | Online and box-office sales share the same availability rules. | One allocation engine |
 | INV-11 | Revenue and occupancy account for cancellations and refunds. | Reporting queries |
 | INV-12 | A Google Sheets outage neither blocks nor cancels a sale. | Transactional outbox |
+| INV-13 | A room cannot host two overlapping performances — whichever configuration they use. | Room row lock (`SELECT … FOR UPDATE`) + room-level overlap check |
 
 ---
 
@@ -210,7 +211,35 @@ Publishing checks that the event has a performance, that the performance has a l
 that the inventory has been generated, and that the prices exist. An event that fails a
 check is not published.
 
-### 4.3 A layout already used is immutable
+### 4.3 Scheduling — the room is booked, not the configuration
+
+A performance uses one seating configuration, and the **room** is reached through it:
+`Performance → SeatingLayout → Room`. That room is what is booked.
+
+```
+Schedule a performance
+  1. choose a configuration        → the room follows from it
+  2. give the date and the time
+  3. check the schedule            → the show ends after it starts (INV-13, BR-06)
+                                     the sale closes when the show starts (BR-07)
+  4. lock the room row             → SELECT … FOR UPDATE, inside a transaction
+  5. check the room is free        → every performance of that room, whatever its
+                                     configuration, that is not cancelled and that
+                                     overlaps the interval
+  6. the room is taken             → the scheduling is refused, naming the room and
+                                     the conflicting show
+  7. otherwise                     → the performance is created and its inventory is
+                                     generated
+```
+
+Two shows of the **same** configuration, at the **same** time, are refused — the
+interval is half-open, so a show ending at 14:00 and a show starting at 14:00 do **not**
+overlap. A show without an end date occupies the room indefinitely after its start.
+
+The lock is taken **before** the check: two administrators scheduling the same room at
+the same instant are serialised, and the second one sees the show of the first.
+
+### 4.4 A layout already used is immutable
 
 Once a layout is referenced by a performance, it can no longer be edited. Any evolution
 creates a **new version**. This protects the integrity of past sales.

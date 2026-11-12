@@ -146,6 +146,7 @@ Multiplicities are read from the opposite class.
 | `Place → LayoutPlace` | 1 → 0..* | The same physical seat can appear in several configurations. |
 | `Event → Performance` | 1 → 0..* | An event can have several performances; a performance belongs to one event. |
 | `SeatingLayout → Performance` | 1 → 0..* | A performance uses **exactly one** configuration. |
+| `Room → Performance` | 1 → 0..* | **Derived**: `Performance → SeatingLayout → Room`. The room is what is booked — two performances of the same room cannot overlap in time, whichever configuration they use. |
 | `Performance → PerformancePlace` | 1 → 1..* | Each performance configuration generates its inventory. |
 | `LayoutPlace → PerformancePlace` | 1 → 0..* | A layout slot becomes a sellable seat for a performance. |
 | `Performance → PerformancePrice` | 1 → 0..* | A performance defines its prices. |
@@ -228,6 +229,7 @@ Some rules cannot be expressed with a simple foreign key. They will be validated
 | Rule | Verification |
 |---|---|
 | `LayoutPlace` references a `Place` and a `LayoutZone` belonging to the **same room/configuration** as the `SeatingLayout`. | Service + tests |
+| Two performances of the **same room** cannot overlap in time — whatever configuration they use. The room is reached through `Performance → SeatingLayout → Room`. | Service + tests |
 | `PerformancePlace` references a `LayoutPlace` belonging to the performance's configuration. | Service + tests |
 | `ReservationItem` references a seat and a price belonging to the **same performance** as the reservation. | Service + tests |
 | The `PerformancePrice` zone must match the reserved seat's zone. | Service + tests |

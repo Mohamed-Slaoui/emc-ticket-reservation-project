@@ -56,9 +56,19 @@ class Event
         return $this->title;
     }
 
+    public function setTitle(string $title): void
+    {
+        $this->title = $title;
+    }
+
     public function getDescription(): ?string
     {
         return $this->description;
+    }
+
+    public function setDescription(?string $description): void
+    {
+        $this->description = $description;
     }
 
     public function getType(): EventType
@@ -66,9 +76,19 @@ class Event
         return $this->type;
     }
 
+    public function setType(EventType $type): void
+    {
+        $this->type = $type;
+    }
+
     public function getStatus(): EventStatus
     {
         return $this->status;
+    }
+
+    public function setStatus(EventStatus $status): void
+    {
+        $this->status = $status;
     }
 
     /** @return Collection<int, Performance> */

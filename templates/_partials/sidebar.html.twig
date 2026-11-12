@@ -45,6 +45,12 @@
                     <span class="sidebar__label">Layouts</span>
                 </a>
 
+                <a class="sidebar__item {{ current_route starts with 'admin_event' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_events') }}">
+                    {{ icon('calendar') }}
+                    <span class="sidebar__label">Events</span>
+                </a>
+
                 <a class="sidebar__item {{ current_route starts with 'admin_user' ? 'sidebar__item--active' }}"
                    href="{{ path('admin_users') }}">
                     {{ icon('users') }}

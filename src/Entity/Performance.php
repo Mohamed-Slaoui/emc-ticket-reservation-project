@@ -82,14 +82,29 @@ class Performance
         return $this->seatingLayout;
     }
 
+    public function setSeatingLayout(SeatingLayout $seatingLayout): void
+    {
+        $this->seatingLayout = $seatingLayout;
+    }
+
     public function getStartsAt(): \DateTimeImmutable
     {
         return $this->startsAt;
     }
 
+    public function setStartsAt(\DateTimeImmutable $startsAt): void
+    {
+        $this->startsAt = $startsAt;
+    }
+
     public function getEndsAt(): ?\DateTimeImmutable
     {
         return $this->endsAt;
+    }
+
+    public function setEndsAt(?\DateTimeImmutable $endsAt): void
+    {
+        $this->endsAt = $endsAt;
     }
 
     public function getSalesOpenAt(): ?\DateTimeImmutable
@@ -115,6 +130,11 @@ class Performance
     public function getStatus(): PerformanceStatus
     {
         return $this->status;
+    }
+
+    public function setStatus(PerformanceStatus $status): void
+    {
+        $this->status = $status;
     }
 
     /** @return Collection<int, PerformancePlace> */
