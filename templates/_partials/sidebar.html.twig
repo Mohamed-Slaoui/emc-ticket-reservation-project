@@ -20,9 +20,25 @@
                     {{ icon('dashboard') }}
                     <span class="sidebar__label">Dashboard</span>
                 </a>
-            {% endif %}
 
-            {% if is_granted('ROLE_ADMIN') %}
+                <a class="sidebar__item {{ current_route starts with 'admin_venues' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_venues') }}">
+                    {{ icon('venue') }}
+                    <span class="sidebar__label">Venues</span>
+                </a>
+
+                <a class="sidebar__item {{ current_route starts with 'admin_rooms' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_rooms') }}">
+                    {{ icon('room') }}
+                    <span class="sidebar__label">Rooms</span>
+                </a>
+
+                <a class="sidebar__item {{ current_route starts with 'admin_places' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_places') }}">
+                    {{ icon('seat') }}
+                    <span class="sidebar__label">Places</span>
+                </a>
+
                 <a class="sidebar__item {{ current_route starts with 'admin_user' ? 'sidebar__item--active' }}"
                    href="{{ path('admin_users') }}">
                     {{ icon('users') }}

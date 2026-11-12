@@ -11,7 +11,22 @@ namespace App\DTO;
  */
 final readonly class Pagination
 {
-    public const DEFAULT_PER_PAGE = 20;
+    /**
+     * The number of rows a page shows by default.
+     *
+     * The administration screens list collections that can be long — four
+     * hundred places for a single room — so the default is deliberately
+     * short. The visitor chooses the size that suits them.
+     */
+    public const DEFAULT_PER_PAGE = 6;
+
+    /**
+     * The page sizes the visitor may choose.
+     *
+     * A fixed list keeps the selector usable and prevents a hand-crafted
+     * URL from asking the database for an unreasonable number of rows.
+     */
+    public const ALLOWED_PER_PAGE = [6, 12, 24, 48, 96];
 
     public function __construct(
         public int $page,

@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ place ? 'Edit the place' : 'New place' }}{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: place ? 'Edit the place' : 'New place',
+        subtitle: place
+            ? 'Change the code, the type or the status of the place.'
+            : 'Add a single seat or standing slot to a room.',
+        action_label: 'Back to the places',
+        action_path: path('admin_places'),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    {% include '_components/flash.html.twig' %}
+
+    {% set form %}
+        {{ form_start(form, {attr: {class: 'form'}}) }}
+            {{ form_row(form.room) }}
+            {{ form_row(form.code) }}
+            {{ form_row(form.type) }}
+
+            <div class="form__grid">
+                {{ form_row(form.rowLabel) }}
+                {{ form_row(form.seatNumber) }}
+            </div>
+
+            {{ form_row(form.isActive) }}
+
+            <div class="form__actions">
+                <button type="submit" class="button button--primary">
+                    {{ place ? 'Save the changes' : 'Create the place' }}
+                </button>
+                <a class="button button--ghost" href="{{ path('admin_places') }}">Cancel</a>
+            </div>
+        {{ form_end(form) }}
+    {% endset %}
+
+    {% include '_components/card.html.twig' with { body: form } %}
+{% endblock %}

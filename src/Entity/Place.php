@@ -70,9 +70,19 @@ class Place
         return $this->code;
     }
 
+    public function setCode(string $code): void
+    {
+        $this->code = $code;
+    }
+
     public function getType(): PlaceType
     {
         return $this->type;
+    }
+
+    public function setType(PlaceType $type): void
+    {
+        $this->type = $type;
     }
 
     public function getRowLabel(): ?string
@@ -80,14 +90,29 @@ class Place
         return $this->rowLabel;
     }
 
+    public function setRowLabel(?string $rowLabel): void
+    {
+        $this->rowLabel = $rowLabel;
+    }
+
     public function getSeatNumber(): ?int
     {
         return $this->seatNumber;
     }
 
+    public function setSeatNumber(?int $seatNumber): void
+    {
+        $this->seatNumber = $seatNumber;
+    }
+
     public function isActive(): bool
     {
         return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): void
+    {
+        $this->isActive = $isActive;
     }
 
     /** @return Collection<int, LayoutPlace> */

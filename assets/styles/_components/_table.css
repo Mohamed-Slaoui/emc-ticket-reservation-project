@@ -89,6 +89,56 @@
 }
 
 /* --------------------------------------------------------------------------
+   The list toolbar — the filters and the page size, above a table.
+   -------------------------------------------------------------------------- */
+
+.list-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+}
+
+/* The page size — how many rows a page shows. */
+.page-size {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-left: auto;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.page-size__select {
+    appearance: none;
+    padding: var(--space-2) var(--space-5) var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background-color: var(--surface);
+    background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%), linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+    background-position: calc(100% - 15px) calc(50% + 1px), calc(100% - 10px) calc(50% + 1px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.page-size__select:hover {
+    border-color: var(--secondary);
+}
+
+.page-size__select:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: var(--shadow-focus);
+}
+
+/* --------------------------------------------------------------------------
    Pagination
    -------------------------------------------------------------------------- */
 
@@ -143,4 +193,12 @@
 .pagination__page--disabled {
     opacity: 0.4;
     pointer-events: none;
+}
+
+/* The pagination sits in the footer of a card: it borrows the border and
+   the padding of the card rather than drawing its own. */
+.card__footer .pagination {
+    width: 100%;
+    padding: 0;
+    border-top: 0;
 }

@@ -2,6 +2,7 @@
 
 namespace App\Controller\Admin;
 
+use App\DTO\PageRequest;
 use App\DTO\UserFormData;
 use App\Entity\User;
 use App\Exception\AccountCannotBeDeletedException;
@@ -29,15 +30,16 @@ class UserController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        $page = max(1, $request->query->getInt('page', 1));
         $search = $request->query->getString('search');
+        $pageRequest = PageRequest::fromRequest($request);
 
-        [$accounts, $pagination] = $users->paginate($page, 20, $search);
+        [$accounts, $pagination] = $users->paginate($pageRequest->page, $pageRequest->perPage, $search);
 
         return $this->render('admin/users/index.html.twig', [
             'users' => $accounts,
             'pagination' => $pagination,
             'search' => $search,
+            'perPage' => $pageRequest->perPage,
         ]);
     }
 

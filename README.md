@@ -125,6 +125,10 @@ The forms are compact by design: the related fields share a line, the roles are 
 selectable cards, and the guidance is a small badge that reveals its text on hover — so a
 whole screen fits in one viewport.
 
+The lists are **paginated**: a screen shows a page of rows — six by default — and the
+visitor chooses the size from a selector next to the filters. The navigation keeps the
+filters and the chosen size, so moving to another page never loses the context.
+
 ## 7. Architecture overview
 
 ```
@@ -346,8 +350,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 |---|---|---|
 | 0 | Project inspection | **Completed** |
 | 1 | Core domain foundation | **Completed** |
-| 2 | Authentication and authorization | **Review required** |
-| 3 | Venue and room administration | Pending |
+| 2 | Authentication and authorization | **Completed** |
+| 3 | Venue and room administration | **Review required** |
 | 4 | Seating layouts and zones | Pending |
 | 5 | Events and performances | Pending |
 | 6 | Tariffs and pricing | Pending |
@@ -380,11 +384,16 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 - **The design system** — a self-hosted webfont, the Ocean Teal palette, and a set of
   reusable components (buttons, cards, badges, tables, forms, alerts, pagination, icons).
   The application shell — sidebar, top bar, content area — is responsive.
+- **The administration of the physical venue** — the venues, their rooms and the places
+  those rooms hold, with a bulk creator that fills a whole row of seats at a time.
+- **Paginated lists** — every collection screen shows a page of rows and lets the visitor
+  choose the size (6 by default, up to 96). The navigation keeps the filters and the
+  chosen size.
 
 **What comes next**
 
-Phase 3 opens the administration of the physical venue: the venues, the rooms and the
-seats, on top of the shell that is already in place.
+Phase 4 opens the seating layouts: the versioned configurations that group the seats of a
+room into zones, and the screen that draws them.
 
 ## 18. Known limitations and MVP boundaries
 

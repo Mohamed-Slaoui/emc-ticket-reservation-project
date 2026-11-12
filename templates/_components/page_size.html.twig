@@ -1,0 +1,32 @@
+{#
+    The page size — how many rows a page shows.
+
+    It must sit inside a GET form: the choice is submitted with the other
+    filters, and the list returns to its first page.
+
+    The form carries `data-turbo="false"`: the filter and the page size
+    change the whole list, so a plain navigation is the right behaviour —
+    and it works on the development server, whose single-threaded PHP
+    cannot answer a Turbo request while the current page holds the
+    connection open.
+
+    Usage:
+        {% include '_components/page_size.html.twig' with {
+            current: perPage,
+        } %}
+#}
+
+{% set sizeChoices = sizes|default(constant('App\\DTO\\Pagination::ALLOWED_PER_PAGE')) %}
+
+<label class="page-size">
+    <span class="page-size__label">Rows</span>
+    <select class="page-size__select"
+            name="perPage"
+            title="The number of rows shown on one page"
+            data-controller="page-size"
+            data-action="change->page-size#submit">
+        {% for size in sizeChoices %}
+            <option value="{{ size }}" {{ size == current ? 'selected' : '' }}>{{ size }}</option>
+        {% endfor %}
+    </select>
+</label>
