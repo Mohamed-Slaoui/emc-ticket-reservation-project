@@ -238,6 +238,7 @@ rediscover them.
 | DomCrawler cannot fill a **multi-checkbox** group | "Input '…[roles][]' cannot take … as a value". | Use radio buttons for a single choice — which is also what the role hierarchy implies. |
 | `assertResponseIsSuccessful()` takes a **message**, not a URI | The URI is silently used as the failure message. | Use `$client->followRedirect()` and assert the path. |
 | `InputBag::getInt()` **throws** on an empty value | A filter form submits `room=` when "every room" is chosen, and the screen answers **400** ("Input value \"room\" is invalid and flag \"FILTER_NULL_ON_FAILURE\" was not set"). | Read the parameter as a **string** and cast it by hand: `(int) $request->query->getString('room')`. `getString()` does not filter. |
+| The CSRF tokens `submit`, `authenticate` and `logout` are **stateless** by default | They are validated with a double-submit cookie and a header. A plain form posts its token *before* the script rewrites it, so the sign in falls back on the `Origin` header — and it fails as soon as the session has recorded another strategy. | The application keeps its state in the session, so its tokens are kept there too: `stateless_token_ids: []` in `config/packages/csrf.yaml`. |
 
 ### 4.4 The lists — pagination
 
@@ -257,7 +258,45 @@ unreasonable number of rows.
 The filter forms and the pagination links carry `data-turbo="false"`: another page of a
 list is another document, and a plain navigation does not depend on the JavaScript.
 
-### 4.5 Documentation
+### 4.5 The seating layouts
+
+A configuration is **versioned**: the version is the highest one of the room plus one, and it
+is never typed by hand. Evolving a configuration therefore means **creating a new
+version** — the old one keeps the seats it sold.
+
+| Rule | Where |
+|---|---|
+| The version is assigned by the server. | `SeatingLayoutService::create()` |
+| A zone code is unique within its configuration. | `LayoutZoneService` + the unique key |
+| A place appears **once** per configuration, and it must be a place of the room. | `LayoutPlaceService` + the unique key |
+| A configuration used by a performance is **frozen**. | `SeatingLayoutService::assertIsEditable()` |
+| Deleting a zone **releases** its seats: they go back to the unmapped seats of the room, they are not deleted. | `LayoutZoneService::delete()` |
+| Deleting a configuration removes its **seat map and its zones** first — the foreign keys are strict. | `SeatingLayoutService::delete()` |
+| A room that holds a configuration cannot be deleted. | `RoomService::delete()` |
+
+### 4.6 The cascading deletions
+
+The foreign keys are strict, so a deletion removes **what it holds**, in this order:
+
+| Deleted | Removes |
+|---|---|
+| A **place** | Its mappings in the seating configurations. |
+| A **configuration** | Its seat map, then its zones. |
+| A **room** | Its configurations, then its seats. |
+| A **venue** | Its rooms — and through them their configurations and their seats. |
+
+The one thing that survives is what a **performance has already sold**: a configuration used
+by a performance, or a seat mapped in such a configuration, cannot be deleted — the
+deletion is refused with the reason.
+
+The confirmation of the button says what is going to be removed, so the administrator is
+never surprised.
+
+The seat map is a **plain form**, not a Symfony form: it holds one checkbox per seat of the
+room — four hundred of them — and the browser sends the checked seats. The zone colours
+come from the token file and follow the position of the zone in the configuration.
+
+### 4.6 Documentation
 
 - `README.md` is a **living document**: it is updated in the same phase as any feature,
   dependency, command, integration or setup requirement it introduces.
@@ -278,8 +317,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 0 | Project inspection and technical foundation | **Completed** |
 | 1 | Core domain foundation (entities, enums, migration) | **Completed** |
 | 2 | Authentication, users and authorisation | **Completed** |
-| 3 | Venue, room and physical place administration | **Review required** |
-| 4 | Seating layout and zone management | Pending |
+| 3 | Venue, room and physical place administration | **Completed** |
+| 4 | Seating layout and zone management | **Review required** |
 | 5 | Events and performances | Pending |
 | 6 | Tariffs and performance pricing | Pending |
 | 7 | Inventory availability and reservation foundation | Pending |
@@ -379,6 +418,10 @@ Carried forward from the Phase 0 inspection. Each one names its target phase.
 | F13 | The forms mapped the entities directly, but their constructors require arguments, and a form class named `PlaceType` collided with the `App\Enum\PlaceType` import. | **Phase 3** — the forms now map dedicated DTOs, and the enum is referenced by its fully qualified name. |
 | F14 | The place code was not checked before the insert, so a duplicate code reached the unique key and answered 500. | **Phase 3** — `PlaceService` refuses the code and the reason is shown next to the field. |
 | F15 | The list screens showed every row: the places screen held 400 of them, and the filter forms answered **400** because an empty filter (`room=`) is rejected by `InputBag::getInt()`. | **Phase 3** — the lists are paginated (6 rows by default, the visitor chooses the size), and the filters are read as strings. |
+| F18 | A seating configuration could not be administered: the version had to be typed by hand, the zones had no screen, and the seats could not be mapped. | **Phase 4** — the configurations are versioned automatically, the zones and the seat map have their own screen, and a configuration used by a performance is frozen. |
+| F19 | Deleting a configuration failed with a **foreign key violation**: its zones and its seat map still referenced it. | **Phase 4** — the deletion removes the seat map and the zones first. The same guard was added to the room, which could not be deleted while it held a configuration. |
+| F20 | The sign in answered *"Invalid CSRF token"* once the session had recorded another CSRF strategy. The `submit`, `authenticate` and `logout` tokens were **stateless** (double-submit cookie + header), but a plain form posts its token before the script rewrites it — so the sign in fell back on the `Origin` header and broke as soon as a Turbo submission had used the cookie. | **Phase 4** — the tokens are stored in the session (`config/packages/csrf.yaml`), and the sign in and the sign out are plain navigations. |
+| F21 | A venue, a room or a place could not be deleted as soon as it held something: the foreign keys are strict, and the administration refused the deletion instead of removing what it held. | **Phase 4** — the deletions cascade: a venue takes its rooms, their configurations and their seats; a room takes its configurations and its seats; a place leaves the configurations it was mapped in. Only what a performance has already sold survives, and the confirmation warns about it. |
 
 ---
 

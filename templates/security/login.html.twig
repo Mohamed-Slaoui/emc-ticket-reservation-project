@@ -26,7 +26,9 @@
                 <div style="height: var(--space-4);"></div>
             {% endif %}
 
-            <form method="post" class="form">
+            {# The sign in is a plain navigation: the authentication must not
+               depend on the JavaScript layer to deliver its answer. #}
+            <form method="post" class="form" data-turbo="false">
                 <div class="form__group">
                     <label class="form__label" for="username">
                         Email address<span class="form__required" aria-hidden="true">*</span>
@@ -44,7 +46,11 @@
                            required autocomplete="current-password" placeholder="••••••••">
                 </div>
 
-                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                {# The `csrf-protection` controller loads the script that sets the
+                   double-submit cookie: without it, the sign in only works as long
+                   as the session has not recorded another validation strategy. #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}"
+                       data-controller="csrf-protection">
 
                 <button type="submit" class="button button--primary button--block button--lg">Sign in</button>
             </form>

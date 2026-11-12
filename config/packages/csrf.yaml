@@ -1,11 +1,18 @@
-# Enable stateless CSRF protection for forms and logins/logouts
+# The CSRF tokens are stored in the session.
+#
+# The Symfony recipe made the `submit`, `authenticate` and `logout` tokens
+# **stateless**: they are validated with a double-submit cookie and a header,
+# which suits an API but not a server-rendered application.
+#
+# A plain form posts its token before the script has rewritten it, so the sign
+# in ends up depending on the `Origin` header — and it fails as soon as the
+# session has recorded another validation strategy, which happens after any
+# Turbo form submission. The application keeps its state in the session, so
+# its tokens are kept there too.
 framework:
     form:
         csrf_protection:
             token_id: submit
 
     csrf_protection:
-        stateless_token_ids:
-            - submit
-            - authenticate
-            - logout
+        stateless_token_ids: []

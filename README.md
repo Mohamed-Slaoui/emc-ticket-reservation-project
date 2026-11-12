@@ -351,8 +351,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 0 | Project inspection | **Completed** |
 | 1 | Core domain foundation | **Completed** |
 | 2 | Authentication and authorization | **Completed** |
-| 3 | Venue and room administration | **Review required** |
-| 4 | Seating layouts and zones | Pending |
+| 3 | Venue and room administration | **Completed** |
+| 4 | Seating layouts and zones | **Review required** |
 | 5 | Events and performances | Pending |
 | 6 | Tariffs and pricing | Pending |
 | 7 | Reservation foundation | Pending |
@@ -389,11 +389,14 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 - **Paginated lists** — every collection screen shows a page of rows and lets the visitor
   choose the size (6 by default, up to 96). The navigation keeps the filters and the
   chosen size.
+- **The seating layouts** — the **versioned configurations** of a room: the zones that
+  group its seats, and the **seat map** that draws the room and maps each seat to a zone.
+  A configuration used by a performance is frozen — any evolution creates a new version.
 
 **What comes next**
 
-Phase 4 opens the seating layouts: the versioned configurations that group the seats of a
-room into zones, and the screen that draws them.
+Phase 5 opens the programming: the events, their performances, and the choice of the
+configuration each performance sells.
 
 ## 18. Known limitations and MVP boundaries
 

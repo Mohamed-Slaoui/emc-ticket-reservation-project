@@ -39,6 +39,12 @@
                     <span class="sidebar__label">Places</span>
                 </a>
 
+                <a class="sidebar__item {{ current_route starts with 'admin_layout' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_layouts') }}">
+                    {{ icon('layout') }}
+                    <span class="sidebar__label">Layouts</span>
+                </a>
+
                 <a class="sidebar__item {{ current_route starts with 'admin_user' ? 'sidebar__item--active' }}"
                    href="{{ path('admin_users') }}">
                     {{ icon('users') }}
@@ -56,7 +62,7 @@
                 <span class="sidebar__label">My account</span>
             </a>
 
-            <a class="sidebar__item" href="{{ path('app_logout') }}">
+            <a class="sidebar__item" href="{{ path('app_logout') }}" data-turbo="false">
                 {{ icon('logout') }}
                 <span class="sidebar__label">Logout</span>
             </a>

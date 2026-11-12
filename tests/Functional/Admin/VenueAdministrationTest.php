@@ -2,9 +2,17 @@
 
 namespace App\Tests\Functional\Admin;
 
+use App\DataFixtures\AppFixtures;
+use App\Entity\Event;
+use App\Entity\LayoutPlace;
+use App\Entity\LayoutZone;
+use App\Entity\Performance;
 use App\Entity\Place;
 use App\Entity\Room;
+use App\Entity\SeatingLayout;
+use App\Entity\User;
 use App\Entity\Venue;
+use App\Enum\EventType;
 use App\Tests\Functional\FunctionalTestCase;
 
 /**
@@ -63,10 +71,11 @@ class VenueAdministrationTest extends FunctionalTestCase
         self::assertSame('3, Rue des Palmiers', $created->getAddress());
     }
 
-    public function test_a_venue_that_contains_rooms_cannot_be_deleted(): void
+    public function test_deleting_a_venue_deletes_its_rooms_and_their_places(): void
     {
         $client = $this->loginAsAdmin();
-        $venue = $this->entityManager()->getRepository(Venue::class)->findOneBy([]);
+        $em = $this->entityManager();
+        $venue = $em->getRepository(Venue::class)->findOneBy([]);
 
         $crawler = $client->request('GET', '/admin/venues');
 
@@ -75,10 +84,15 @@ class VenueAdministrationTest extends FunctionalTestCase
 
         self::assertResponseRedirects('/admin/venues');
 
-        $client->followRedirect();
-        self::assertSelectorTextContains('.alert--danger', 'still contains');
+        $em->clear();
 
-        self::assertNotNull($this->entityManager()->getRepository(Venue::class)->find($venue->getId()));
+        // The venue, its rooms, its seats and their configurations are gone.
+        self::assertNull($em->getRepository(Venue::class)->find($venue->getId()));
+        self::assertCount(0, $em->getRepository(Room::class)->findBy(['venue' => $venue->getId()]));
+        self::assertCount(0, $em->getRepository(Place::class)->findAll());
+        self::assertCount(0, $em->getRepository(SeatingLayout::class)->findAll());
+        self::assertCount(0, $em->getRepository(LayoutZone::class)->findAll());
+        self::assertCount(0, $em->getRepository(LayoutPlace::class)->findAll());
     }
 
     public function test_an_administrator_creates_a_room(): void
@@ -104,10 +118,11 @@ class VenueAdministrationTest extends FunctionalTestCase
         self::assertSame($venue->getId(), $created->getVenue()->getId());
     }
 
-    public function test_a_room_that_holds_places_cannot_be_deleted(): void
+    public function test_deleting_a_room_deletes_its_places_and_its_configurations(): void
     {
         $client = $this->loginAsAdmin();
-        $room = $this->entityManager()->getRepository(Room::class)->findOneBy([]);
+        $em = $this->entityManager();
+        $room = $em->getRepository(Room::class)->findOneBy([]);
 
         $crawler = $client->request('GET', '/admin/rooms');
 
@@ -116,10 +131,13 @@ class VenueAdministrationTest extends FunctionalTestCase
 
         self::assertResponseRedirects('/admin/rooms');
 
-        $client->followRedirect();
-        self::assertSelectorTextContains('.alert--danger', 'still holds');
+        $em->clear();
 
-        self::assertNotNull($this->entityManager()->getRepository(Room::class)->find($room->getId()));
+        self::assertNull($em->getRepository(Room::class)->find($room->getId()));
+        self::assertCount(0, $em->getRepository(Place::class)->findAll());
+        self::assertCount(0, $em->getRepository(SeatingLayout::class)->findAll());
+        self::assertCount(0, $em->getRepository(LayoutZone::class)->findAll());
+        self::assertCount(0, $em->getRepository(LayoutPlace::class)->findAll());
     }
 
     public function test_an_administrator_creates_a_place(): void
@@ -248,7 +266,7 @@ class VenueAdministrationTest extends FunctionalTestCase
         self::assertNotNull($em->getRepository(Place::class)->findOneBy(['code' => 'A-42']));
     }
 
-    public function test_a_place_mapped_in_a_layout_can_only_be_deactivated(): void
+    public function test_deleting_a_mapped_place_removes_it_from_the_configurations(): void
     {
         $client = $this->loginAsAdmin();
         $em = $this->entityManager();
@@ -258,16 +276,93 @@ class VenueAdministrationTest extends FunctionalTestCase
 
         $crawler = $client->request('GET', '/admin/places');
 
-        // The delete button is not even offered for a mapped place.
-        self::assertCount(0, $crawler->filter('form[action*="/admin/places/'.$mapped->getId().'/delete"]'));
+        // The delete button is offered.
+        self::assertCount(1, $crawler->filter('form[action*="/admin/places/'.$mapped->getId().'/delete"]'));
 
-        // And the server refuses it anyway.
-        $client->request('POST', '/admin/places/'.$mapped->getId().'/delete', [
+        $form = $crawler->filter('form[action*="/admin/places/'.$mapped->getId().'/delete"]')->form();
+        $client->submit($form);
+
+        self::assertResponseRedirects('/admin/places');
+
+        $em->clear();
+
+        // The seat is gone, and so is its mapping.
+        self::assertNull($em->getRepository(Place::class)->find($mapped->getId()));
+        self::assertCount(0, $em->getRepository(LayoutPlace::class)->findBy(['place' => $mapped->getId()]));
+
+        // The other seats and the configurations are untouched.
+        self::assertCount(399, $em->getRepository(Place::class)->findAll());
+        self::assertCount(399, $em->getRepository(LayoutPlace::class)->findAll());
+    }
+
+    public function test_a_request_without_a_valid_token_deletes_nothing(): void
+    {
+        $client = $this->loginAsAdmin();
+        $em = $this->entityManager();
+        $place = $em->getRepository(Place::class)->findOneBy(['code' => 'A-01']);
+
+        $client->request('POST', '/admin/places/'.$place->getId().'/delete', [
             '_token' => 'invalid-token',
         ]);
 
         self::assertResponseRedirects('/admin/places');
-        self::assertNotNull($em->getRepository(Place::class)->find($mapped->getId()));
+        self::assertNotNull($em->getRepository(Place::class)->find($place->getId()));
+    }
+
+    public function test_a_venue_that_has_a_sold_seat_cannot_be_deleted(): void
+    {
+        $client = $this->loginAsAdmin();
+        $em = $this->entityManager();
+        $venue = $em->getRepository(Venue::class)->findOneBy([]);
+        $layout = $em->getRepository(SeatingLayout::class)->findOneBy([]);
+
+        // A performance now refers to the configuration.
+        $event = new Event('Concert de test', EventType::Concert);
+        $em->persist($event);
+        $em->persist(new Performance($event, $layout, new \DateTimeImmutable('+7 days')));
+        $em->flush();
+
+        $crawler = $client->request('GET', '/admin/venues');
+
+        $form = $crawler->filter('form[action*="/admin/venues/'.$venue->getId().'/delete"]')->form();
+        $client->submit($form);
+
+        self::assertResponseRedirects('/admin/venues');
+
+        $client->followRedirect();
+        self::assertSelectorTextContains('.alert--danger', 'used by a performance');
+
+        $em->clear();
+
+        // The venue and its seats survive: the sale must too.
+        self::assertNotNull($em->getRepository(Venue::class)->find($venue->getId()));
+        self::assertCount(400, $em->getRepository(Place::class)->findAll());
+    }
+
+    public function test_a_place_that_was_sold_cannot_be_deleted(): void
+    {
+        $client = $this->loginAsAdmin();
+        $em = $this->entityManager();
+        $place = $em->getRepository(Place::class)->findOneBy(['code' => 'A-01']);
+        $layout = $em->getRepository(SeatingLayout::class)->findOneBy([]);
+
+        $event = new Event('Concert de test', EventType::Concert);
+        $em->persist($event);
+        $em->persist(new Performance($event, $layout, new \DateTimeImmutable('+7 days')));
+        $em->flush();
+
+        $crawler = $client->request('GET', '/admin/places');
+
+        $form = $crawler->filter('form[action*="/admin/places/'.$place->getId().'/delete"]')->form();
+        $client->submit($form);
+
+        self::assertResponseRedirects('/admin/places');
+
+        $client->followRedirect();
+        self::assertSelectorTextContains('.alert--danger', 'used by a performance');
+
+        $em->clear();
+        self::assertNotNull($em->getRepository(Place::class)->find($place->getId()));
     }
 
     public function test_a_place_can_be_taken_out_of_service(): void

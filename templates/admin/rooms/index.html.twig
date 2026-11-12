@@ -87,7 +87,7 @@
                                             {{ icon('pencil', 'icon icon--sm') }}
                                         </a>
                                         <form method="post" action="{{ path('admin_rooms_delete', {id: room.id}) }}"
-                                              data-turbo-confirm="Delete the room {{ room.name }}? This cannot be undone.">
+                                              data-turbo-confirm="Delete the room {{ room.name }}? Its seating configurations and its seats will be deleted too. This cannot be undone.">
                                             <input type="hidden" name="_token" value="{{ csrf_token('delete_room_' ~ room.id) }}">
                                             <button class="button button--danger-ghost button--icon" type="submit"
                                                     title="Delete" aria-label="Delete {{ room.name }}">

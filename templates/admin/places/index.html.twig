@@ -103,16 +103,14 @@
                                                 {{ icon(place.isActive ? 'lock' : 'check', 'icon icon--sm') }}
                                             </button>
                                         </form>
-                                        {% if place.id not in mapped %}
-                                            <form method="post" action="{{ path('admin_places_delete', {id: place.id}) }}"
-                                                  data-turbo-confirm="Delete the place {{ place.code }}? This cannot be undone.">
-                                                <input type="hidden" name="_token" value="{{ csrf_token('delete_place_' ~ place.id) }}">
-                                                <button class="button button--danger-ghost button--icon" type="submit"
-                                                        title="Delete" aria-label="Delete {{ place.code }}">
-                                                    {{ icon('trash', 'icon icon--sm') }}
-                                                </button>
-                                            </form>
-                                        {% endif %}
+                                        <form method="post" action="{{ path('admin_places_delete', {id: place.id}) }}"
+                                              data-turbo-confirm="Delete the place {{ place.code }}? It will be removed from the seating configurations. This cannot be undone.">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_place_' ~ place.id) }}">
+                                            <button class="button button--danger-ghost button--icon" type="submit"
+                                                    title="Delete" aria-label="Delete {{ place.code }}">
+                                                {{ icon('trash', 'icon icon--sm') }}
+                                            </button>
+                                        </form>
                                     </span>
                                 </td>
                             </tr>

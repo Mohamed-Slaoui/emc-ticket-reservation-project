@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ layout ? 'Edit the configuration' : 'New configuration' }}{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: layout ? 'Edit the configuration' : 'New configuration',
+        subtitle: layout
+            ? 'Change the name, the description or the status of the configuration.'
+            : 'Create a versioned configuration of a room, then define its zones and map its seats.',
+        action_label: 'Back to the configurations',
+        action_path: path('admin_layouts'),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    {% include '_components/flash.html.twig' %}
+
+    {% set form %}
+        {{ form_start(form, {attr: {class: 'form'}}) }}
+            {{ form_row(form.room) }}
+            {{ form_row(form.name) }}
+            {{ form_row(form.description) }}
+            {{ form_row(form.isActive) }}
+
+            <div class="form__actions">
+                <button type="submit" class="button button--primary">
+                    {{ layout ? 'Save the changes' : 'Create the configuration' }}
+                </button>
+                <a class="button button--ghost" href="{{ path('admin_layouts') }}">Cancel</a>
+            </div>
+        {{ form_end(form) }}
+    {% endset %}
+
+    {% include '_components/card.html.twig' with { body: form } %}
+{% endblock %}

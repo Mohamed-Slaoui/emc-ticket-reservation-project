@@ -39,6 +39,18 @@
     --info: #347EAA;
 
     /* ---------------------------------------------------------------------
+       Zone colours — the seat map of a configuration.
+       A zone takes the colour of its position in the configuration, so the
+       map stays readable whatever the order of the zones.
+       --------------------------------------------------------------------- */
+    --zone-1: #167D7F;
+    --zone-2: #65B6A8;
+    --zone-3: #E58A70;
+    --zone-4: #347EAA;
+    --zone-5: #D99432;
+    --zone-6: #25845F;
+
+    /* ---------------------------------------------------------------------
        Typography
        --------------------------------------------------------------------- */
     --font-sans: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

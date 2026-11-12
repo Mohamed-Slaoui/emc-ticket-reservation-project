@@ -3,6 +3,8 @@
 namespace App\Service\Venue;
 
 use App\Entity\Venue;
+use App\Exception\LayoutCannotBeModifiedException;
+use App\Exception\RoomCannotBeDeletedException;
 use App\Exception\VenueCannotBeDeletedException;
 use App\Repository\RoomRepository;
 use App\Repository\VenueRepository;
@@ -11,8 +13,9 @@ use Doctrine\ORM\EntityManagerInterface;
 /**
  * The physical venue: its identity and its address.
  *
- * A venue that already contains rooms cannot be deleted — the rooms, and
- * through them the seats and the sales, must survive.
+ * Deleting a venue deletes what it holds: its rooms, their seating
+ * configurations and their seats. The only thing that survives is what a
+ * performance has already sold.
  */
 class VenueService
 {
@@ -20,6 +23,7 @@ class VenueService
         private readonly EntityManagerInterface $entityManager,
         private readonly VenueRepository $venues,
         private readonly RoomRepository $rooms,
+        private readonly RoomService $roomService,
     ) {
     }
 
@@ -43,18 +47,20 @@ class VenueService
     }
 
     /**
-     * @throws VenueCannotBeDeletedException when the venue still contains rooms
+     * Deletes the venue, its rooms, their configurations and their seats.
+     *
+     * @throws VenueCannotBeDeletedException when a configuration is used by a performance
      */
     public function delete(Venue $venue): void
     {
-        $roomCount = $this->rooms->countForVenue($venue);
-
-        if ($roomCount > 0) {
-            throw new VenueCannotBeDeletedException(sprintf(
-                'This venue still contains %d room%s: delete the rooms first, or keep the venue as it is.',
-                $roomCount,
-                $roomCount > 1 ? 's' : '',
-            ));
+        foreach ($this->rooms->findForVenue($venue) as $room) {
+            try {
+                $this->roomService->remove($room);
+            } catch (RoomCannotBeDeletedException $exception) {
+                throw new VenueCannotBeDeletedException($exception->getMessage(), 0, $exception);
+            } catch (LayoutCannotBeModifiedException $exception) {
+                throw new VenueCannotBeDeletedException($exception->getMessage(), 0, $exception);
+            }
         }
 
         $this->entityManager->remove($venue);

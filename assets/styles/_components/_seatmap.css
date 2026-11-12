@@ -1,0 +1,216 @@
+/* ==============================================================================
+   Seat map — the drawing of a room and the zones of its configuration.
+   ========================================================================== */
+
+.layout-editor {
+    display: grid;
+    grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-5);
+}
+
+.layout-editor__side {
+    min-width: 0;
+}
+
+.layout-editor__main {
+    min-width: 0;
+}
+
+.layout-editor__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+@media (width <= 70rem) {
+    .layout-editor {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   The zones of the configuration.
+   -------------------------------------------------------------------------- */
+
+.zone-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.zone-list__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.zone-list__item:last-child {
+    border-bottom: 0;
+}
+
+.zone-list__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.zone-list__name {
+    font-weight: var(--weight-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zone-list__meta {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.zone-list__swatch {
+    display: block;
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: none;
+    border-radius: var(--radius-xs);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+}
+
+.zone-list__swatch--1 { background: var(--zone-1); border-color: var(--zone-1); }
+.zone-list__swatch--2 { background: var(--zone-2); border-color: var(--zone-2); }
+.zone-list__swatch--3 { background: var(--zone-3); border-color: var(--zone-3); }
+.zone-list__swatch--4 { background: var(--zone-4); border-color: var(--zone-4); }
+.zone-list__swatch--5 { background: var(--zone-5); border-color: var(--zone-5); }
+.zone-list__swatch--6 { background: var(--zone-6); border-color: var(--zone-6); }
+
+.zone-list__actions {
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+    margin-top: var(--space-2);
+}
+
+/* --------------------------------------------------------------------------
+   The map itself.
+   -------------------------------------------------------------------------- */
+
+.seatmap__toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+}
+
+.seatmap__zone-field {
+    min-width: 14rem;
+}
+
+.seatmap__select-all {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-left: auto;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.seatmap__legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    padding-bottom: var(--space-4);
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.seatmap__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.seatmap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-height: 60vh;
+    overflow: auto;
+    padding: var(--space-2);
+}
+
+.seatmap__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.seatmap__row-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 4.5rem;
+    flex: none;
+    cursor: pointer;
+}
+
+.seatmap__row-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.seatmap__seats {
+    display: grid;
+    grid-template-columns: repeat(var(--seatmap-columns, 40), minmax(0, 1fr));
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* A seat of the room. */
+.seat {
+    display: block;
+    cursor: pointer;
+}
+
+.seat__input {
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    min-width: 0.8rem;
+    aspect-ratio: 1;
+    border-radius: var(--radius-xs);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.seat__input:hover {
+    box-shadow: var(--shadow-focus);
+}
+
+.seat__input:checked {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+}
+
+.seat__input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.seat--zone-1 .seat__input { background: var(--zone-1); border-color: var(--zone-1); }
+.seat--zone-2 .seat__input { background: var(--zone-2); border-color: var(--zone-2); }
+.seat--zone-3 .seat__input { background: var(--zone-3); border-color: var(--zone-3); }
+.seat--zone-4 .seat__input { background: var(--zone-4); border-color: var(--zone-4); }
+.seat--zone-5 .seat__input { background: var(--zone-5); border-color: var(--zone-5); }
+.seat--zone-6 .seat__input { background: var(--zone-6); border-color: var(--zone-6); }

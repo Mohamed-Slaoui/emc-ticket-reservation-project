@@ -1,0 +1,189 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}{{ layout.name }} — Seat map{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: layout.name,
+        subtitle: 'Version ' ~ layout.version ~ ' — ' ~ layout.room.venue.name ~ ' · ' ~ layout.room.name,
+        action_label: 'Edit the configuration',
+        action_path: path('admin_layouts_edit', {id: layout.id}),
+        action_icon: 'pencil',
+        action_variant: 'outline',
+    } %}
+
+    {% include '_components/flash.html.twig' %}
+
+    {% if isLocked %}
+        <div class="alert alert--warning">
+            <span class="alert__icon">{{ icon('lock', 'icon icon--sm') }}</span>
+            <div class="alert__body">
+                <strong>This configuration is frozen.</strong>
+                It is used by a performance: it can no longer be edited. Create a new version to evolve it.
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="layout-editor__actions">
+        <form method="post" action="{{ path('admin_layouts_new_version', {id: layout.id}) }}" data-turbo="false">
+            <input type="hidden" name="_token" value="{{ csrf_token('new_version_' ~ layout.id) }}">
+            <button type="submit" class="button button--outline">
+                {{ icon('plus', 'icon icon--sm') }}
+                New version
+            </button>
+        </form>
+
+        <form method="post" action="{{ path('admin_layouts_delete', {id: layout.id}) }}" data-turbo="false"
+              data-turbo-confirm="Delete the configuration {{ layout.name }} v{{ layout.version }}? This cannot be undone.">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete_layout_' ~ layout.id) }}">
+            <button type="submit" class="button button--danger-ghost"
+                    {{ isLocked ? 'disabled' : '' }}>
+                {{ icon('trash', 'icon icon--sm') }}
+                Delete
+            </button>
+        </form>
+    </div>
+
+    <div class="layout-editor">
+        {# ------------------------------------------------------------------
+           The zones of the configuration.
+           ------------------------------------------------------------------ #}
+        <aside class="layout-editor__side">
+            {% set zonesBody %}
+                {% if zones is empty %}
+                    <p class="u-muted u-small">No zone yet. A zone groups the seats that share the same price.</p>
+                {% else %}
+                    <ul class="zone-list">
+                        {% for zone in zones %}
+                            <li class="zone-list__item">
+                                <span class="zone-list__swatch zone-list__swatch--{{ zoneColors[zone.id] }}"></span>
+                                <div class="zone-list__text">
+                                    <div class="zone-list__name">{{ zone.name }}</div>
+                                    <div class="zone-list__meta">{{ zone.code }}</div>
+                                </div>
+                                <span class="u-flex u-gap-1">
+                                    <a class="button button--ghost button--icon" href="{{ path('admin_layout_zones_edit', {layoutId: layout.id, id: zone.id}) }}"
+                                       title="Edit" aria-label="Edit the zone {{ zone.name }}">
+                                        {{ icon('pencil', 'icon icon--sm') }}
+                                    </a>
+                                    <form method="post" action="{{ path('admin_layout_zones_delete', {layoutId: layout.id, id: zone.id}) }}"
+                                          data-turbo-confirm="Delete the zone {{ zone.name }}? Its seats become unmapped again.">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_zone_' ~ zone.id) }}">
+                                        <button class="button button--danger-ghost button--icon" type="submit"
+                                                title="Delete" aria-label="Delete the zone {{ zone.name }}">
+                                            {{ icon('trash', 'icon icon--sm') }}
+                                        </button>
+                                    </form>
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <div class="zone-list__actions">
+                    <a class="button button--outline" href="{{ path('admin_layout_zones_new', {layoutId: layout.id}) }}">
+                        {{ icon('plus', 'icon icon--sm') }}
+                        Add a zone
+                    </a>
+                </div>
+            {% endset %}
+
+            {% include '_components/card.html.twig' with {
+                title: 'Zones',
+                subtitle: zones|length ~ ' zone' ~ (zones|length > 1 ? 's' : ''),
+                body: zonesBody,
+            } %}
+        </aside>
+
+        {# ------------------------------------------------------------------
+           The seat map.
+           ------------------------------------------------------------------ #}
+        <div class="layout-editor__main">
+            {% set mapBody %}
+                {% if zones is empty %}
+                    <div class="alert alert--info">
+                        <span class="alert__icon">{{ icon('info', 'icon icon--sm') }}</span>
+                        <div>Define a zone first: the seats are then mapped to a zone.</div>
+                    </div>
+                {% else %}
+                    <form method="post" action="{{ path('admin_layout_places_assign', {layoutId: layout.id}) }}"
+                          data-controller="seat-map" data-turbo="false">
+                        <input type="hidden" name="_token" value="{{ csrf_token('assign_places_' ~ layout.id) }}">
+
+                        <div class="seatmap__toolbar">
+                            <label class="seatmap__zone-field">
+                                <span class="u-visually-hidden">The zone the selected seats belong to</span>
+                                <select class="form__control" name="zone">
+                                    <option value="">Choose a zone…</option>
+                                    {% for zone in zones %}
+                                        <option value="{{ zone.id }}">{{ zone.name }} ({{ zone.code }})</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+
+                            <button type="submit" name="action" value="assign" class="button button--primary"
+                                    {{ isLocked ? 'disabled' : '' }}>
+                                Map to the zone
+                            </button>
+                            <button type="submit" name="action" value="release" class="button button--ghost"
+                                    {{ isLocked ? 'disabled' : '' }}>
+                                Release
+                            </button>
+
+                            <label class="seatmap__select-all">
+                                <input type="checkbox" data-action="change->seat-map#toggleAll">
+                                <span>Every seat</span>
+                            </label>
+                        </div>
+
+                        <div class="seatmap__legend">
+                            {% for zone in zones %}
+                                <span class="seatmap__legend-item">
+                                    <span class="zone-list__swatch zone-list__swatch--{{ zoneColors[zone.id] }}"></span>
+                                    {{ zone.name }}
+                                </span>
+                            {% endfor %}
+                            <span class="seatmap__legend-item">
+                                <span class="zone-list__swatch zone-list__swatch--free"></span>
+                                Not mapped
+                            </span>
+                        </div>
+
+                        <div class="seatmap">
+                            {% for rowLabel, seats in rows %}
+                                <div class="seatmap__row" data-seat-map-target="row">
+                                    <label class="seatmap__row-head">
+                                        <input type="checkbox" data-action="change->seat-map#toggleRow"
+                                               aria-label="Select the whole row {{ rowLabel }}">
+                                        <span class="seatmap__row-label">{{ rowLabel|default('—') }}</span>
+                                    </label>
+
+                                    <div class="seatmap__seats">
+                                        {% for seat in seats %}
+                                            {% set zoneId = seatZones[seat.id]|default(null) %}
+                                            <label class="seat seat--{{ zoneId ? 'zone-' ~ zoneColors[zoneId] : 'free' }}"
+                                                   title="{{ seat.code }}{{ zoneId ? '' : ' — not mapped' }}">
+                                                <input type="checkbox" name="places[]" value="{{ seat.id }}"
+                                                       class="seat__input"
+                                                       aria-label="{{ seat.code }}"
+                                                       {{ isLocked ? 'disabled' : '' }}>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </form>
+                {% endif %}
+            {% endset %}
+
+            {% include '_components/card.html.twig' with {
+                title: 'Seat map',
+                subtitle: 'Check the seats and map them to a zone.',
+                body: mapBody,
+            } %}
+        </div>
+    </div>
+{% endblock %}

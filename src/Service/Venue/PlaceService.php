@@ -9,13 +9,15 @@ use App\Exception\PlaceCannotBeDeletedException;
 use App\Exception\PlaceCodeAlreadyExistsException;
 use App\Repository\LayoutPlaceRepository;
 use App\Repository\PlaceRepository;
+use App\Service\Layout\SeatingLayoutService;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * The physical places of a room: numbered seats and standing slots.
  *
- * A place that is already mapped in a seating layout belongs to the
- * configuration: it can be deactivated, never deleted.
+ * A place that is mapped in a seating layout leaves the configuration when
+ * it is deleted — unless the configuration is used by a performance: the
+ * seat was sold, and the sale must survive.
  */
 class PlaceService
 {
@@ -23,6 +25,7 @@ class PlaceService
         private readonly EntityManagerInterface $entityManager,
         private readonly PlaceRepository $places,
         private readonly LayoutPlaceRepository $layoutPlaces,
+        private readonly SeatingLayoutService $layouts,
     ) {
     }
 
@@ -95,18 +98,40 @@ class PlaceService
     }
 
     /**
-     * @throws PlaceCannotBeDeletedException when the place is mapped in a layout
+     * Deletes the place and the mappings it holds in the seating layouts.
+     *
+     * @throws PlaceCannotBeDeletedException when the seat was sold for a performance
      */
     public function delete(Place $place): void
     {
-        if ($this->layoutPlaces->isMapped($place)) {
-            throw new PlaceCannotBeDeletedException(
-                'This place is already mapped in a seating layout: deactivate it instead of deleting it, so the configuration is preserved.',
-            );
+        $this->remove($place);
+
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Removes the place and its mappings — without flushing, so a cascade
+     * can delete a whole branch in one transaction.
+     *
+     * @throws PlaceCannotBeDeletedException when the seat was sold for a performance
+     */
+    public function remove(Place $place): void
+    {
+        // The place leaves the configurations it was mapped in.
+        foreach ($this->layoutPlaces->findForPlace($place) as $layoutPlace) {
+            $layout = $layoutPlace->getSeatingLayout();
+
+            if ($this->layouts->isUsedByPerformance($layout)) {
+                throw new PlaceCannotBeDeletedException(sprintf(
+                    'This place belongs to the configuration "%s", which is used by a performance: it was sold and cannot be deleted.',
+                    $layout->getName(),
+                ));
+            }
+
+            $this->entityManager->remove($layoutPlace);
         }
 
         $this->entityManager->remove($place);
-        $this->entityManager->flush();
     }
 
     /**

@@ -79,9 +79,27 @@ class LayoutPlace
         return $this->displayOrder;
     }
 
+    public function setDisplayOrder(int $displayOrder): void
+    {
+        $this->displayOrder = $displayOrder;
+    }
+
     public function isAvailableInLayout(): bool
     {
         return $this->isAvailableInLayout;
+    }
+
+    public function setIsAvailableInLayout(bool $isAvailableInLayout): void
+    {
+        $this->isAvailableInLayout = $isAvailableInLayout;
+    }
+
+    /**
+     * Moves the seat to another zone of the same configuration.
+     */
+    public function moveToZone(LayoutZone $zone): void
+    {
+        $this->layoutZone = $zone;
     }
 
     /** @return Collection<int, PerformancePlace> */

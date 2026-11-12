@@ -5,6 +5,8 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    # The CSRF tokens are stored in the session — see config/packages/csrf.yaml.
+
     #esi: true
     #fragments: true
 

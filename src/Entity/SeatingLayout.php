@@ -76,6 +76,11 @@ class SeatingLayout
         return $this->name;
     }
 
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+
     public function getVersion(): int
     {
         return $this->version;
@@ -86,9 +91,19 @@ class SeatingLayout
         return $this->description;
     }
 
+    public function setDescription(?string $description): void
+    {
+        $this->description = $description;
+    }
+
     public function isActive(): bool
     {
         return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): void
+    {
+        $this->isActive = $isActive;
     }
 
     public function getCreatedAt(): \DateTimeImmutable
