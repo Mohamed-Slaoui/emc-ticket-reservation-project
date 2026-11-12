@@ -245,6 +245,7 @@ rediscover them.
 | `assertResponseIsSuccessful()` takes a **message**, not a URI | The URI is silently used as the failure message. | Use `$client->followRedirect()` and assert the path. |
 | `InputBag::getInt()` **throws** on an empty value | A filter form submits `room=` when "every room" is chosen, and the screen answers **400** ("Input value \"room\" is invalid and flag \"FILTER_NULL_ON_FAILURE\" was not set"). | Read the parameter as a **string** and cast it by hand: `(int) $request->query->getString('room')`. `getString()` does not filter. |
 | The CSRF tokens `submit`, `authenticate` and `logout` are **stateless** by default | They are validated with a double-submit cookie and a header. A plain form posts its token *before* the script rewrites it, so the sign in falls back on the `Origin` header — and it fails as soon as the session has recorded another strategy. | The application keeps its state in the session, so its tokens are kept there too: `stateless_token_ids: []` in `config/packages/csrf.yaml`. |
+| **A form that re-renders after an error must answer 422, not 200** | Turbo refuses a 200 that is not a redirect: *"Form responses must redirect to another location"* — and the administrator sees **nothing at all**, no error, no message. A 422 is rendered by Turbo like an invalid form. | `RendersUnprocessableForm::renderUnprocessable()` in the controllers. It is asserted by the tests, because a silent failure is invisible to a test that does not assert the status code. |
 | A **pessimistic lock** needs an open transaction | `find($class, $id, LockMode::PESSIMISTIC_WRITE)` outside a transaction throws, and the lock would be released immediately anyway. | The lock is taken inside `EntityManager::wrapInTransaction()`, before the check it protects. |
 
 ### 4.4 The lists — pagination
@@ -459,6 +460,7 @@ Carried forward from the Phase 0 inspection. Each one names its target phase.
 | F23 | The demo data had no event, and a fixture that queried the database before flushing found nothing: the inventory of the performance was empty. | **Phase 5** — the demo data holds a draft event, and the fixture flushes before it queries. |
 | F24 | Deleting an event that had a performance answered **500**: the foreign key of the performances is strict. | **Phase 5** — the deletion is refused with a clear alert ("This event has N performances: delete them first"), and the performances are deleted one by one, each with its inventory. |
 | F25 | Two performances could be scheduled on the same room at the same time: the room was double-booked, and nothing in the model forbade it. | **Phase 5** — the room is derived through the configuration, the room row is locked, and the scheduling is refused when the room is occupied. |
+| F26 | A form that could not be saved (a conflicting show, a duplicate code) re-rendered with **200**. Turbo refuses a 200 that is not a redirect, so the page did not change and the administrator saw nothing — the error was silent. | **Phase 5** — such a form answers **422**, like an invalid form: Turbo renders it, and the administrator sees the message. |
 
 ---
 

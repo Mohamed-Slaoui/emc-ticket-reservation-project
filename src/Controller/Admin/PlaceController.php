@@ -26,6 +26,8 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin/places')]
 class PlaceController extends AbstractController
 {
+    use RendersUnprocessableForm;
+
     #[Route('', name: 'admin_places', methods: ['GET'])]
     public function index(
         Request $request,
@@ -81,7 +83,7 @@ class PlaceController extends AbstractController
                 // administrator typed are kept.
                 $form->get('code')->addError(new FormError($exception->getMessage()));
 
-                return $this->render('admin/places/form.html.twig', [
+                return $this->renderUnprocessable('admin/places/form.html.twig', [
                     'form' => $form,
                     'place' => null,
                 ]);
@@ -174,7 +176,7 @@ class PlaceController extends AbstractController
                 // administrator typed are kept.
                 $form->get('code')->addError(new FormError($exception->getMessage()));
 
-                return $this->render('admin/places/form.html.twig', [
+                return $this->renderUnprocessable('admin/places/form.html.twig', [
                     'form' => $form,
                     'place' => $place,
                 ]);

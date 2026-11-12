@@ -22,6 +22,8 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin/layouts/{layoutId}/zones')]
 class LayoutZoneController extends AbstractController
 {
+    use RendersUnprocessableForm;
+
     #[Route('/new', name: 'admin_layout_zones_new', requirements: ['layoutId' => '\\d+'], methods: ['GET', 'POST'])]
     public function new(
         Request $request,
@@ -42,7 +44,7 @@ class LayoutZoneController extends AbstractController
             } catch (ZoneCodeAlreadyExistsException $exception) {
                 $form->get('code')->addError(new FormError($exception->getMessage()));
 
-                return $this->render('admin/layouts/zone_form.html.twig', [
+                return $this->renderUnprocessable('admin/layouts/zone_form.html.twig', [
                     'form' => $form,
                     'layout' => $layout,
                     'zone' => null,
@@ -91,7 +93,7 @@ class LayoutZoneController extends AbstractController
             } catch (ZoneCodeAlreadyExistsException $exception) {
                 $form->get('code')->addError(new FormError($exception->getMessage()));
 
-                return $this->render('admin/layouts/zone_form.html.twig', [
+                return $this->renderUnprocessable('admin/layouts/zone_form.html.twig', [
                     'form' => $form,
                     'layout' => $layout,
                     'zone' => $zone,

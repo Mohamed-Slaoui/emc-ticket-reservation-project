@@ -40,8 +40,11 @@ class PerformanceType extends AbstractType
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
                 'help' => 'The date and the time of the show.',
-                'attr' => ['class' => 'form__control'],
-                'constraints' => [new Assert\NotNull(message: 'The date of the show is required.')],
+                'attr' => ['class' => 'form__control', 'min' => (new \DateTimeImmutable())->format('Y-m-d\TH:i')],
+                'constraints' => [
+                    new Assert\NotNull(message: 'The date of the show is required.'),
+                    new Assert\GreaterThanOrEqual(new \DateTimeImmutable(), message: 'A performance cannot be scheduled in the past.'),
+                ],
             ])
             ->add('endsAt', DateTimeType::class, [
                 'label' => 'Ends at',

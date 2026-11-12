@@ -210,6 +210,13 @@ class PerformanceService
         ?\DateTimeImmutable $endsAt,
         ?\DateTimeImmutable $salesCloseAt,
     ): void {
+        if ($startsAt < new \DateTimeImmutable()) {
+            throw new InvalidPerformanceScheduleException(sprintf(
+                'A performance cannot be scheduled in the past: the show starts on %s.',
+                $startsAt->format('d/m/Y H:i'),
+            ));
+        }
+
         if (null !== $endsAt && $endsAt <= $startsAt) {
             throw new InvalidPerformanceScheduleException(sprintf(
                 'The show ends on %s, before it starts on %s: when it crosses midnight, choose the next day explicitly.',

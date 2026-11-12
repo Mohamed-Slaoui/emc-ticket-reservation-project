@@ -251,6 +251,38 @@ class PerformanceSchedulingTest extends FunctionalTestCase
         self::assertSame('2027-01-10 16:00:00', $performance->getStartsAt()->format('Y-m-d H:i:s'));
     }
 
+    public function test_a_performance_in_the_past_is_rejected(): void
+    {
+        $this->expectException(InvalidPerformanceScheduleException::class);
+        $this->expectExceptionMessage('in the past');
+
+        $this->service()->create(
+            $this->event(),
+            $this->layout(),
+            new \DateTimeImmutable('2020-01-01 20:00:00'),
+            new \DateTimeImmutable('2020-01-01 22:00:00'),
+        );
+    }
+
+    public function test_the_form_rejects_a_date_in_the_past(): void
+    {
+        $event = $this->event();
+        $layout = $this->layout();
+
+        $crawler = $this->client->request('GET', '/admin/events/'.$event->getId().'/performances/new');
+
+        $form = $crawler->filter('form')->form([
+            'admin_performance[layout]' => (string) $layout->getId(),
+            'admin_performance[startsAt]' => '2020-01-01T20:00',
+            'admin_performance[endsAt]' => '2020-01-01T22:00',
+        ]);
+
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('.form__error', 'A performance cannot be scheduled in the past.');
+    }
+
     public function test_an_end_datetime_that_is_not_after_the_start_is_rejected(): void
     {
         $this->expectException(InvalidPerformanceScheduleException::class);
@@ -356,9 +388,31 @@ class PerformanceSchedulingTest extends FunctionalTestCase
 
         $this->client->submit($form);
 
-        self::assertResponseIsSuccessful();
+        // The answer is 422, like an invalid form: Turbo renders a 422
+        // response, but it refuses a 200 that is not a redirect — the
+        // administrator would see nothing at all.
+        self::assertResponseStatusCodeSame(422);
         self::assertSelectorTextContains('.alert--danger', 'is already occupied by');
         self::assertSelectorTextContains('.alert--danger', $layout->getRoom()->getName());
+    }
+
+    public function test_an_invalid_schedule_is_reported_to_the_administrator(): void
+    {
+        $layout = $this->layout();
+        $event = $this->event();
+
+        $crawler = $this->client->request('GET', '/admin/events/'.$event->getId().'/performances/new');
+
+        $form = $crawler->filter('form')->form([
+            'admin_performance[layout]' => (string) $layout->getId(),
+            'admin_performance[startsAt]' => '2027-01-10T20:00',
+            'admin_performance[endsAt]' => '2027-01-10T01:00',
+        ]);
+
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('.alert--danger', 'before it starts');
     }
 
     public function test_the_layout_selector_shows_the_room(): void

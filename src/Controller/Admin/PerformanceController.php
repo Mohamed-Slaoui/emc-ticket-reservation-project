@@ -23,6 +23,8 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin/events/{eventId}/performances')]
 class PerformanceController extends AbstractController
 {
+    use RendersUnprocessableForm;
+
     #[Route('/new', name: 'admin_performances_new', requirements: ['eventId' => '\\d+'], methods: ['GET', 'POST'])]
     public function new(Request $request, #[MapEntity(id: 'eventId')] Event $event, PerformanceService $performanceService): Response
     {
@@ -47,7 +49,7 @@ class PerformanceController extends AbstractController
             } catch (InvalidPerformanceScheduleException|PerformanceRoomUnavailableException $exception) {
                 $this->addFlash('danger', $exception->getMessage());
 
-                return $this->render('admin/performances/form.html.twig', [
+                return $this->renderUnprocessable('admin/performances/form.html.twig', [
                     'form' => $form,
                     'event' => $event,
                     'performance' => null,
@@ -100,7 +102,7 @@ class PerformanceController extends AbstractController
             } catch (InvalidPerformanceScheduleException|PerformanceRoomUnavailableException $exception) {
                 $this->addFlash('danger', $exception->getMessage());
 
-                return $this->render('admin/performances/form.html.twig', [
+                return $this->renderUnprocessable('admin/performances/form.html.twig', [
                     'form' => $form,
                     'event' => $event,
                     'performance' => $performance,
