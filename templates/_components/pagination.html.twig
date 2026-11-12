@@ -1,0 +1,46 @@
+{#
+    Pagination — the navigation of a paginated collection.
+
+    Usage:
+        {% include '_components/pagination.html.twig' with {
+            pagination: pagination,
+            route: 'admin_users',
+            query: {search: search}
+        } %}
+#}
+
+{% if pagination.total > 0 %}
+    <nav class="pagination" aria-label="Pagination">
+        <p class="pagination__summary">
+            {{ pagination.firstItem }}–{{ pagination.lastItem }} of {{ pagination.total }}
+        </p>
+
+        {% if pagination.pageCount > 1 %}
+            <div class="pagination__pages">
+                {% if pagination.hasPrevious %}
+                    <a class="pagination__page" href="{{ path(route, query|merge({page: pagination.previousPage})) }}"
+                       aria-label="Previous page" rel="prev">‹</a>
+                {% else %}
+                    <span class="pagination__page pagination__page--disabled" aria-hidden="true">‹</span>
+                {% endif %}
+
+                {% for page in pagination.pages %}
+                    {% if page is null %}
+                        <span class="pagination__page" aria-hidden="true">…</span>
+                    {% elseif page == pagination.page %}
+                        <span class="pagination__page pagination__page--current" aria-current="page">{{ page }}</span>
+                    {% else %}
+                        <a class="pagination__page" href="{{ path(route, query|merge({page: page})) }}">{{ page }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.hasNext %}
+                    <a class="pagination__page" href="{{ path(route, query|merge({page: pagination.nextPage})) }}"
+                       aria-label="Next page" rel="next">›</a>
+                {% else %}
+                    <span class="pagination__page pagination__page--disabled" aria-hidden="true">›</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    </nav>
+{% endif %}

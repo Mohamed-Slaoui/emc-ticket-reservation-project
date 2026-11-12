@@ -1,0 +1,102 @@
+/* ==============================================================================
+   Badge — the small status pills.
+   ========================================================================== */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    line-height: 1.5;
+    white-space: nowrap;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+}
+
+.badge--success {
+    background: rgba(37, 132, 95, 0.12);
+    color: var(--success);
+}
+
+.badge--warning {
+    background: rgba(217, 148, 50, 0.14);
+    color: var(--warning);
+}
+
+.badge--danger {
+    background: rgba(217, 83, 79, 0.13);
+    color: var(--danger);
+}
+
+.badge--info {
+    background: rgba(52, 126, 170, 0.13);
+    color: var(--info);
+}
+
+.badge--accent {
+    background: var(--accent-light);
+    color: var(--secondary);
+}
+
+.badge--primary {
+    background: rgba(18, 60, 67, 0.08);
+    color: var(--primary);
+}
+
+/* A squared badge, for counters that sit next to a label. */
+.badge--count {
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-xs);
+    background: var(--primary);
+    color: var(--surface);
+}
+
+/* --------------------------------------------------------------------------
+   Avatar — the user picture of the reference.
+   -------------------------------------------------------------------------- */
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    border-radius: var(--radius-pill);
+    background: var(--accent-light);
+    color: var(--primary);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    user-select: none;
+}
+
+.avatar--sm {
+    width: 2rem;
+    height: 2rem;
+    font-size: var(--text-xs);
+}
+
+.avatar--lg {
+    width: 3.25rem;
+    height: 3.25rem;
+    font-size: var(--text-md);
+}
+
+.avatar--teal {
+    background: var(--secondary);
+    color: var(--surface);
+}
+
+.avatar--coral {
+    background: var(--event-highlight);
+    color: var(--surface);
+}
+
+.avatar--sand {
+    background: var(--warning);
+    color: var(--surface);
+}

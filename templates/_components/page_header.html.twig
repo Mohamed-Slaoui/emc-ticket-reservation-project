@@ -1,0 +1,32 @@
+{#
+    Page header — the title, the subtitle and the contextual action.
+
+    The component is included with plain data and renders the action itself,
+    so that no markup has to be captured by the caller.
+
+    Usage:
+        {% include '_components/page_header.html.twig' with {
+            title: 'Accounts',
+            subtitle: 'Everyone who can sign in.',
+            action_label: 'Add an account',
+            action_path: path('admin_users_new'),
+            action_icon: 'plus',
+        } %}
+#}
+
+{% from '_components/buttons.html.twig' import button %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">{{ title }}</h1>
+        {% if subtitle is defined and subtitle %}
+            <p class="page-header__subtitle">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+
+    {% if action_label is defined and action_label %}
+        <div class="page-header__actions">
+            {{ button(action_label, action_path|default(null), action_variant|default('primary'), action_icon|default(null)) }}
+        </div>
+    {% endif %}
+</div>

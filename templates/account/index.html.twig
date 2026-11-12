@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}My account{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: 'My account',
+        subtitle: 'Your profile and your permissions in the application.',
+    } %}
+
+    {% set profile %}
+        <div class="stack stack--tight">
+            <div class="u-flex u-gap-4">
+                <span class="avatar avatar--lg avatar--teal">{{ icon('user', 'icon icon--lg') }}</span>
+                <div>
+                    <p class="u-strong">{{ user.firstName }} {{ user.lastName }}</p>
+                    <p class="u-muted u-small">{{ user.email }}</p>
+                    {% if user.phone %}<p class="u-muted u-small">{{ user.phone }}</p>{% endif %}
+                </div>
+            </div>
+
+            <hr>
+
+            <div>
+                <p class="u-muted u-small">Roles</p>
+                <p class="u-flex u-wrap u-gap-2" style="margin-top: var(--space-2);">
+                    {% for role in user.businessRoles %}
+                        <span class="badge badge--accent">{{ role|replace({'ROLE_': ''}) }}</span>
+                    {% endfor %}
+                </p>
+            </div>
+
+            <div>
+                <p class="u-muted u-small">Member since</p>
+                <p>{{ user.createdAt|date('j F Y') }}</p>
+            </div>
+        </div>
+    {% endset %}
+
+    {% set links %}
+        <div class="stack stack--tight">
+            {% if is_granted('ROLE_ADMIN') %}
+                <a class="button button--outline button--block" href="{{ path('admin_dashboard') }}">
+                    {{ icon('dashboard', 'icon icon--sm') }} Administration
+                </a>
+                <a class="button button--outline button--block" href="{{ path('admin_users') }}">
+                    {{ icon('users', 'icon icon--sm') }} Accounts
+                </a>
+            {% endif %}
+        </div>
+    {% endset %}
+
+    <div class="grid grid--halves">
+        {% include '_components/card.html.twig' with { title: 'Profile', body: profile } %}
+        {% include '_components/card.html.twig' with { title: 'Quick links', body: links } %}
+    </div>
+{% endblock %}

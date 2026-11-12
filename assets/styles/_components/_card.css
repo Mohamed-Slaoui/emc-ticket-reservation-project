@@ -1,0 +1,182 @@
+/* ==============================================================================
+   Card — the panel surface used across the interface.
+   ========================================================================== */
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+}
+
+.card--flat {
+    box-shadow: none;
+}
+
+.card--accent {
+    background: var(--primary);
+    border-color: transparent;
+    color: var(--surface);
+}
+
+.card--muted {
+    background: var(--surface-muted);
+    border-color: transparent;
+}
+
+.card--highlight {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Header ------------------------------------------------------------------ */
+
+.card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-5) 0;
+}
+
+.card__title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.01em;
+}
+
+.card__subtitle {
+    margin-top: var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.card--accent .card__subtitle,
+.card--accent .card__title {
+    color: var(--surface);
+}
+
+.card--accent .card__subtitle {
+    opacity: 0.8;
+}
+
+/* Body -------------------------------------------------------------------- */
+
+.card__body {
+    padding: var(--space-5);
+}
+
+.card__header + .card__body {
+    padding-top: var(--space-4);
+}
+
+.card__footer {
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+/* An icon tile, as used on the project list of the reference. */
+.card__icon {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    border-radius: var(--radius-pill);
+    background: var(--accent-light);
+    color: var(--secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Stat card — the big-number tile of the reference dashboard.
+   -------------------------------------------------------------------------- */
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+}
+
+.stat--accent {
+    background: var(--primary);
+    border-color: transparent;
+    color: var(--surface);
+}
+
+.stat__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.stat__label {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+}
+
+.stat__value {
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-bold);
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.stat__foot {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.stat--accent .stat__foot {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* --------------------------------------------------------------------------
+   List rows — the "project" list of the reference.
+   -------------------------------------------------------------------------- */
+
+.list {
+    display: flex;
+    flex-direction: column;
+}
+
+.list__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    border-bottom: 1px solid var(--border);
+}
+
+.list__item:last-child {
+    border-bottom: 0;
+}
+
+.list__main {
+    min-width: 0;
+    flex: 1;
+}
+
+.list__title {
+    font-weight: var(--weight-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.list__meta {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}

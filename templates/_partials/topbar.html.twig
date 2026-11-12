@@ -1,0 +1,32 @@
+{% from '_partials/icons.html.twig' import icon, initials %}
+
+<header class="topbar">
+    <div class="topbar__left">
+        <button class="sidebar-toggle" type="button" data-action="click->sidebar#toggle"
+                aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="false">
+            {{ icon('menu') }}
+        </button>
+
+        {% block topbar_search %}
+            {# The global search is delivered with the events and performances
+               screens (Phase 5); the slot is kept here so the layout does not
+               have to change when it arrives. #}
+        {% endblock %}
+    </div>
+
+    {# <div class="topbar__right">
+        {% block topbar_actions %}{% endblock %}
+
+        {% if app.user %}
+            <span class="topbar__divider"></span>
+
+            <a class="account" href="{{ path('app_account') }}">
+                <span class="avatar avatar--teal">{{ initials(app.user.firstName, app.user.lastName) }}</span>
+                <span class="account__text">
+                    <span class="account__name">{{ app.user.firstName }} {{ app.user.lastName }}</span>
+                    <span class="account__mail">{{ app.user.email }}</span>
+                </span>
+            </a>
+        {% endif %}
+    </div> #}
+</header>

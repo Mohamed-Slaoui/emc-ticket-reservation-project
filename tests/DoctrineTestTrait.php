@@ -65,7 +65,7 @@ trait DoctrineTestTrait
     protected function entityManager(): EntityManagerInterface
     {
         /** @var EntityManagerInterface $manager */
-        $manager = self::getContainer()->get('doctrine')->getManager();
+        $manager = static::getContainer()->get('doctrine')->getManager();
 
         return $manager;
     }
@@ -88,17 +88,7 @@ trait DoctrineTestTrait
         $connection->executeStatement('SET FOREIGN_KEY_CHECKS = 1');
 
         $executor = new ORMExecutor($manager);
-        $executor->execute(self::getContainer()->get('doctrine.fixtures.loader')->getFixtures(), true);
+        $executor->execute(static::getContainer()->get('doctrine.fixtures.loader')->getFixtures(), true);
         $manager->clear();
-    }
-
-    /**
-     * Boots the kernel and loads the fixtures — the standard entry point of
-     * a database-backed test.
-     */
-    protected function bootWithFixtures(): void
-    {
-        self::bootKernel();
-        $this->loadFixtures();
     }
 }

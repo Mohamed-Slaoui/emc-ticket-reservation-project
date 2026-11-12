@@ -1,0 +1,63 @@
+{% from '_partials/icons.html.twig' import icon, initials %}
+
+{# The navigation is extended as the administration screens are delivered:
+   every entry points to a route that exists. #}
+{% set current_route = app.request.attributes.get('_route') %}
+
+<aside class="sidebar" id="sidebar" data-sidebar-target="sidebar">
+    <a class="sidebar__brand" href="{{ path('app_home') }}">
+        <span class="sidebar__mark">{{ icon('venue', 'icon icon--lg') }}</span>
+        <span class="sidebar__wordmark">Ticketing</span>
+    </a>
+
+    <nav class="sidebar__nav" aria-label="Main navigation">
+        <div class="sidebar__group">
+            <p class="sidebar__group-title">Menu</p>
+
+            {% if is_granted('ROLE_ADMIN') %}
+                <a class="sidebar__item {{ current_route == 'admin_dashboard' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_dashboard') }}">
+                    {{ icon('dashboard') }}
+                    <span class="sidebar__label">Dashboard</span>
+                </a>
+            {% endif %}
+
+            {% if is_granted('ROLE_ADMIN') %}
+                <a class="sidebar__item {{ current_route starts with 'admin_user' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_users') }}">
+                    {{ icon('users') }}
+                    <span class="sidebar__label">Users</span>
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="sidebar__group">
+            <p class="sidebar__group-title">General</p>
+
+            <a class="sidebar__item {{ current_route == 'app_account' ? 'sidebar__item--active' }}"
+               href="{{ path('app_account') }}">
+                {{ icon('user') }}
+                <span class="sidebar__label">My account</span>
+            </a>
+
+            <a class="sidebar__item" href="{{ path('app_logout') }}">
+                {{ icon('logout') }}
+                <span class="sidebar__label">Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="sidebar__footer">
+        {% if app.user %}
+            <div class="sidebar__user">
+                <span class="avatar">{{ initials(app.user.firstName, app.user.lastName) }}</span>
+                <span class="sidebar__user-text">
+                    <span class="sidebar__user-name">{{ app.user.firstName }} {{ app.user.lastName }}</span>
+                    <span class="sidebar__user-mail">{{ app.user.email }}</span>
+                </span>
+            </div>
+        {% endif %}
+    </div>
+</aside>
+
+<div class="sidebar__scrim" data-sidebar-target="scrim" data-action="click->sidebar#close"></div>

@@ -1,0 +1,162 @@
+/* ==============================================================================
+   Button — the pill-shaped action of the reference.
+   ========================================================================== */
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.button:hover {
+    text-decoration: none;
+}
+
+.button:active {
+    transform: translateY(1px);
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Variants ---------------------------------------------------------------- */
+
+.button--primary {
+    background: var(--primary);
+    color: var(--surface);
+}
+
+.button--primary:hover {
+    background: var(--primary-hover);
+    color: var(--surface);
+}
+
+.button--secondary {
+    background: var(--secondary);
+    color: var(--surface);
+}
+
+.button--secondary:hover {
+    background: var(--secondary-hover);
+    color: var(--surface);
+}
+
+.button--outline {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.button--outline:hover {
+    border-color: var(--secondary);
+    color: var(--secondary);
+}
+
+.button--ghost {
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.button--ghost:hover {
+    background: var(--surface-muted);
+    color: var(--text);
+}
+
+.button--danger {
+    background: var(--danger);
+    color: var(--surface);
+}
+
+.button--danger:hover {
+    background: #c04340;
+    color: var(--surface);
+}
+
+/* A destructive action: quiet until it is hovered. */
+.button--danger-ghost {
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.button--danger-ghost:hover {
+    background: rgba(217, 83, 79, 0.10);
+    color: var(--danger);
+}
+
+/* Sizes ------------------------------------------------------------------- */
+
+.button--sm {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+}
+
+.button--lg {
+    padding: var(--space-4) var(--space-6);
+    font-size: var(--text-md);
+}
+
+.button--block {
+    width: 100%;
+}
+
+/* Icon-only --------------------------------------------------------------- */
+
+.button--icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border-radius: var(--radius-pill);
+}
+
+.button--icon.button--sm {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* A circular action used on the statistic cards of the reference. */
+.button--circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.button--circle:hover {
+    border-color: var(--secondary);
+    color: var(--secondary);
+}
+
+.button--circle.button--inverse {
+    border-color: rgba(255, 255, 255, 0.45);
+    color: var(--surface);
+}
+
+.button--circle.button--inverse:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: var(--surface);
+    color: var(--surface);
+}
+
+/* A group of buttons that read as a single segmented control. */
+.button-group {
+    display: inline-flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}

@@ -1,0 +1,164 @@
+/* ==============================================================================
+   Layout — the application shell: sidebar, topbar and content area.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   The shell — a soft white card floating on the canvas.
+
+   The sidebar is a sticky column: it keeps the full height of the viewport
+   and stays in view while the content scrolls.
+   -------------------------------------------------------------------------- */
+
+.shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    gap: var(--space-5);
+    /* max-width: var(--shell-max-width); */
+    max-width: 100%;
+    /* The shell fills exactly one viewport: its own margins and its padding
+       are removed from the height, so a short page never scrolls. */
+    min-height: calc(100vh - var(--space-8) - (2 * var(--space-5)));
+    padding: var(--space-4);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+}
+
+.shell__main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    /* padding: 0 var(--space-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg); */
+}
+
+/* --------------------------------------------------------------------------
+   Content area
+   -------------------------------------------------------------------------- */
+
+.content {
+    flex: 1;
+    padding: var(--space-2) var(--space-1) var(--space-4);
+    min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Page header — title, subtitle and contextual actions.
+   -------------------------------------------------------------------------- */
+
+.page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-6);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-6);
+}
+
+.page-header__title {
+    font-size: var(--text-3xl);
+    letter-spacing: -0.02em;
+}
+
+.page-header__subtitle {
+    margin-top: var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--text-md);
+}
+
+.page-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   Grids — the dashboard card layouts.
+   -------------------------------------------------------------------------- */
+
+.grid {
+    display: grid;
+    gap: var(--space-4);
+}
+
+.grid--stats {
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.grid--panels {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.grid--halves {
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+}
+
+/* --------------------------------------------------------------------------
+   Stack — a vertical rhythm helper for simple columns.
+   -------------------------------------------------------------------------- */
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.stack--tight {
+    gap: var(--space-2);
+}
+
+/* --------------------------------------------------------------------------
+   Authentication layout — the centred card used by the login page.
+   -------------------------------------------------------------------------- */
+
+.auth {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    padding: var(--space-6);
+    background: var(--canvas);
+}
+
+.auth__card {
+    width: 100%;
+    max-width: 26rem;
+    padding: var(--space-8);
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+}
+
+.auth__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive — the sidebar becomes a drawer on narrow screens.
+   -------------------------------------------------------------------------- */
+
+.sidebar-toggle {
+    display: none;
+}
+
+@media (width <= 64rem) {
+    .shell {
+        grid-template-columns: minmax(0, 1fr);
+        padding: var(--space-4);
+        border-radius: var(--radius-xl);
+    }
+
+    .sidebar-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: var(--radius-sm);
+        color: var(--text);
+        background: var(--surface-muted);
+    }
+}

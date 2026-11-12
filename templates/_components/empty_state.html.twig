@@ -1,0 +1,28 @@
+{#
+    Empty state — shown when a collection has no row yet.
+
+    Usage:
+        {% include '_components/empty_state.html.twig' with {
+            iconName: 'users',
+            title: 'No account yet',
+            text: 'Create the first account to give access to the venue.',
+            action_label: 'Add an account',
+            action_path: path('admin_users_new'),
+        } %}
+#}
+
+{% from '_partials/icons.html.twig' import icon %}
+{% from '_components/buttons.html.twig' import button %}
+
+<div class="empty">
+    <span class="empty__icon">
+        {{ icon(iconName|default('inbox'), 'icon icon--lg') }}
+    </span>
+
+    <p class="empty__title">{{ title|default('') }}</p>
+    <p class="empty__text">{{ text|default('') }}</p>
+
+    {% if action_label is defined and action_label %}
+        {{ button(action_label, action_path|default(null), action_variant|default('primary'), action_icon|default(null)) }}
+    {% endif %}
+</div>

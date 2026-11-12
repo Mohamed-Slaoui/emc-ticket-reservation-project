@@ -1,0 +1,33 @@
+{#
+    Card — the panel surface of the interface.
+
+    The body is passed as **captured markup**, because a Twig macro imported
+    by the caller is not visible inside an embedded template:
+
+        {% set body %}
+            <p>Some content…</p>
+            {{ button('Do it', path('somewhere')) }}
+        {% endset %}
+        {% include '_components/card.html.twig' with { title: 'Title', body: body } %}
+#}
+
+<div class="card {{ variant|default('') }}">
+    {% if title is defined and title %}
+        <div class="card__header">
+            <div>
+                <h3 class="card__title">{{ title }}</h3>
+                {% if subtitle is defined and subtitle %}
+                    <p class="card__subtitle">{{ subtitle }}</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card__body">
+        {{ body|default('')|raw }}
+    </div>
+
+    {% if footer is defined and footer %}
+        <div class="card__footer">{{ footer|raw }}</div>
+    {% endif %}
+</div>

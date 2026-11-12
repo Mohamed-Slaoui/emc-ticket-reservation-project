@@ -1,0 +1,138 @@
+/* ==============================================================================
+   Base — element defaults and the typography scale.
+   ========================================================================== */
+
+body {
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    color: var(--text);
+    background: var(--canvas);
+}
+
+h1 {
+    font-size: var(--text-3xl);
+    letter-spacing: -0.02em;
+}
+
+h2 {
+    font-size: var(--text-2xl);
+    letter-spacing: -0.015em;
+}
+
+h3 {
+    font-size: var(--text-xl);
+}
+
+h4 {
+    font-size: var(--text-lg);
+}
+
+h5,
+h6 {
+    font-size: var(--text-md);
+}
+
+a {
+    color: var(--secondary);
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--secondary-hover);
+}
+
+strong,
+b {
+    font-weight: var(--weight-bold);
+}
+
+code,
+kbd,
+samp {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: var(--space-6) 0;
+}
+
+small {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Native form controls — the browser defaults are replaced by the component
+   stylesheets, but the base keeps them predictable.
+   -------------------------------------------------------------------------- */
+
+input,
+select,
+textarea {
+    font-size: var(--text-base);
+    color: var(--text);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 6rem;
+}
+
+fieldset {
+    border: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+legend {
+    padding: 0;
+    font-weight: var(--weight-bold);
+}
+
+/* --------------------------------------------------------------------------
+   Focus — visible, consistent, and never removed.
+   -------------------------------------------------------------------------- */
+
+:focus-visible {
+    outline: 2px solid var(--secondary);
+    outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Selection
+   -------------------------------------------------------------------------- */
+
+::selection {
+    background: var(--accent-light);
+    color: var(--primary);
+}
+
+/* --------------------------------------------------------------------------
+   Scrollbars — subtle, teal-tinted
+   -------------------------------------------------------------------------- */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: var(--radius-pill);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+    background-clip: content-box;
+}

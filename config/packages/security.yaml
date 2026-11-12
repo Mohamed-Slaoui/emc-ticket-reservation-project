@@ -4,12 +4,17 @@ security:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
-    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
         app_user_provider:
-            entity:
-                class: App\Entity\User
-                property: email
+            id: App\Security\ActiveUserProvider
+
+    # The role hierarchy: an administrator can do everything a box-office
+    # employee can do, and a box-office employee everything a customer can do.
+    # The hierarchy only grants *additional* permissions — it never removes
+    # the explicit role checks performed by the services.
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_BOX_OFFICE, ROLE_CUSTOMER]
+        ROLE_BOX_OFFICE: [ROLE_CUSTOMER]
 
     firewalls:
         dev:
@@ -19,17 +24,26 @@ security:
         main:
             lazy: true
             provider: app_user_provider
-
-            # Activate different ways to authenticate:
-            # https://symfony.com/doc/current/security.html#the-firewall
-
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                enable_csrf: true
+                # The landing page depends on the role of the account: it sends
+                # an administrator to the administration and anybody else to
+                # their own account.
+                default_target_path: app_home
+            logout:
+                path: app_logout
+                target: app_login
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/box-office, roles: ROLE_BOX_OFFICE }
+        - { path: ^/account, roles: ROLE_USER }
 
 when@test:
     security:

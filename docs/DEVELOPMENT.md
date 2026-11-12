@@ -81,7 +81,7 @@ The PHP application container is **not** part of the Compose stack yet — it is
 
 ```
 .
-├── assets/                  # Stimulus controllers and CSS (AssetMapper, no build step)
+├── assets/                  # Stimulus controllers, styles and the self-hosted webfont
 ├── bin/                     # console, phpunit
 ├── config/
 │   ├── packages/            # Per-bundle configuration
@@ -91,14 +91,21 @@ The PHP application container is **not** part of the Compose stack yet — it is
 ├── migrations/              # Doctrine Migrations
 ├── public/                  # Front controller
 ├── src/
-│   ├── Controller/          # HTTP controllers (Admin, BoxOffice, Customer, Entry)
+│   ├── Controller/          # HTTP controllers (Admin, Security, …)
 │   ├── DataFixtures/        # Deterministic demo data
+│   ├── DTO/                 # Form and view models
 │   ├── Entity/              # Doctrine entities
 │   ├── Enum/                # Backed enumerations
+│   ├── Form/                # Symfony forms
 │   ├── Repository/          # Doctrine repositories
-│   ├── Service/             # Application services (Venue, Event, Booking, Payment, Ticket, Reporting)
+│   ├── Security/            # Security services (user provider)
+│   ├── Service/             # Application services
 │   └── Kernel.php
-├── templates/               # Twig templates
+├── templates/
+│   ├── _components/         # Reusable UI components
+│   ├── _partials/           # Shared includes (icons)
+│   ├── admin/  customer/  box_office/  entry/   # Screens, feature-oriented
+│   └── base.html.twig       # The application shell
 ├── tests/
 │   ├── Unit/                # Isolated business rules
 │   ├── Integration/         # Repositories, persistence, transactions
@@ -108,6 +115,60 @@ The PHP application container is **not** part of the Compose stack yet — it is
 ├── translations/            # Translation catalogues
 ├── compose.yaml             # MySQL 8 + Mailpit
 └── .env / .env.example      # Environment configuration
+```
+
+### 3.1 The design system
+
+The interface is built on **plain CSS**, served by AssetMapper: no build step, no Node
+toolchain, nothing to install before the application runs.
+
+```
+assets/styles/
+├── app.css          # the single entry point (@import manifest)
+├── _fonts.css       # the self-hosted webfont
+├── _tokens.css      # every colour, radius, spacing, shadow
+├── _reset.css
+├── _base.css        # element defaults
+├── _layout.css      # the application shell
+├── _components/     # one file per component
+├── _utilities.css   # a small, whitelisted set
+└── _print.css       # the printed tickets (Phase 11)
+```
+
+**The rules**
+
+- The token file is the **only** place where a colour, a radius or a spacing value is
+  written. A component never hard-codes a value.
+- One component per file, named after the component.
+- Utilities stay small; anything used twice belongs in a component.
+- The icons are inline SVG paths in `templates/_partials/icons.html.twig` — no icon font,
+  no sprite file, no dependency.
+- A field's help text is **never printed**: it becomes a `form__hint` badge that reveals
+  the text on hover or on focus. The form stays compact and the guidance stays available.
+- A radio group is rendered as a row of **selectable cards** (`form__card`). The label of
+  a choice is written `Title — description` and is split by the theme, so a card shows a
+  title and a short description. A standalone checkbox uses the same card.
+- The fields that belong together share a line through `form__grid`.
+
+### 3.2 Composing the components — a Twig constraint
+
+Twig resolves the macros of a template **at compile time**, which has two consequences
+that must be respected:
+
+- A macro can only use the macros imported **inside its own body**. A macro that calls
+  another macro must import it inside itself.
+- The blocks of an `{% embed %}` are compiled **in the embedded template**: the macros
+  imported by the caller are **not** available inside them.
+
+The components therefore follow one pattern: they are **included** with plain data, and
+the caller captures the dynamic markup first:
+
+```twig
+{% set body %}
+    <p>Some content…</p>
+    {{ button('Do it', path('somewhere')) }}
+{% endset %}
+{% include '_components/card.html.twig' with { title: 'Title', body: body } %}
 ```
 
 ---
@@ -142,7 +203,7 @@ Tests are part of the feature, not a later stage. Every phase ships its tests.
 |---|---|---|
 | `tests/Unit` | Pure business rules, no database. | `ReservationTest`, `PerformancePlaceTest` |
 | `tests/Integration` | Repositories, persistence, transactions, real database constraints. | `UniqueConstraintsTest` |
-| `tests/Functional` | HTTP routes, forms, authentication, authorisation, full workflows. | `FixturesTest` |
+| `tests/Functional` | HTTP routes, forms, authentication, authorisation, full workflows. | `LoginTest`, `UserManagementTest` |
 
 Rules:
 
@@ -152,7 +213,24 @@ Rules:
 - The suite must be runnable against MySQL 8 — no SQLite fallback, because the schema
   depends on MySQL-specific behaviour.
 
-### 4.3 Documentation
+### 4.3 Symfony 7 — the traps worth remembering
+
+They were all met during Phase 2; they are recorded so that the next phases do not
+rediscover them.
+
+| Trap | What happens | The rule |
+|---|---|---|
+| `ROLE_USER` is **not** added automatically | A custom user entity that returns only its business roles is denied by every `access_control` rule that expects `ROLE_USER`. | `User::getRoles()` always merges `ROLE_USER`; `getBusinessRoles()` returns the stored ones. |
+| The generic `UserChecker` was **removed** | With an entity provider, a **disabled account still signs in**. | The check is made in `App\Security\ActiveUserProvider`, which reports a disabled account as *not found*. |
+| An invalid form answers **422**, not 200 | `assertResponseIsSuccessful()` fails on a rejected form. | Assert `422` and look for the error in the form. |
+| A failed `form_login` **redirects** to the login page | It does not answer 401; the error travels through the session. | Assert the redirect, then follow it and look for the alert. |
+| `firewalls.main.form_login` uses `login_path`, not `path` | The configuration is refused at build time. | `login_path` + `check_path`. |
+| A macro cannot use the imports of the template body | "Macros imported in the body … are not available because the body was not rendered." | Import inside the macro. |
+| The blocks of an `{% embed %}` cannot use the caller's macros | "Unknown 'button' function". | `{% include %}` + captured markup — see §3.2. |
+| DomCrawler cannot fill a **multi-checkbox** group | "Input '…[roles][]' cannot take … as a value". | Use radio buttons for a single choice — which is also what the role hierarchy implies. |
+| `assertResponseIsSuccessful()` takes a **message**, not a URI | The URI is silently used as the failure message. | Use `$client->followRedirect()` and assert the path. |
+
+### 4.4 Documentation
 
 - `README.md` is a **living document**: it is updated in the same phase as any feature,
   dependency, command, integration or setup requirement it introduces.
@@ -171,8 +249,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | Phase | Description | Status |
 |---|---|---|
 | 0 | Project inspection and technical foundation | **Completed** |
-| 1 | Core domain foundation (entities, enums, migration) | **Review required** |
-| 2 | Authentication, users and authorisation | Pending |
+| 1 | Core domain foundation (entities, enums, migration) | **Completed** |
+| 2 | Authentication, users and authorisation | **Review required** |
 | 3 | Venue, room and physical place administration | Pending |
 | 4 | Seating layout and zone management | Pending |
 | 5 | Events and performances | Pending |
@@ -268,6 +346,7 @@ Carried forward from the Phase 0 inspection. Each one names its target phase.
 | F9 | A blocked seat could be held, and releasing it put it back on sale. | **Phase 1** — `hold()` rejects it, `release()` keeps it out of sale. |
 | F10 | The `EntityManager` was orphaned by the fixture bootstrap. | **Phase 1** — resolved lazily, through `DoctrineTestTrait`. |
 | F11 | The schema did not deliver the guarantees the model promised: several current prices could coexist for one combination, the inventory state invariant was PHP-only, and a second booking-policy row was possible. | **Phase 1 (patch)** — migration `Version20261110221207` adds a generated-column unique key on `performance_price`, the `ck_performance_place_state` check constraint, and a unique key on `booking_policy.singleton`. |
+| F12 | The account form could not delete an account, and `booking_policy.updated_by_id` blocked the deletion of an account that had changed the policy. | **Phase 2** — the deletion was added with its history-preserving guards, and the reference became `ON DELETE SET NULL` (migration `Version20261112154148`). |
 
 ---
 

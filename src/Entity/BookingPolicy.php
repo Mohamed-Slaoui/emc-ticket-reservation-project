@@ -43,8 +43,13 @@ class BookingPolicy
     )]
     private bool $singleton = true;
 
+    /**
+     * The administrator who changed the policy last — audit information, not
+     * a link that keeps the account alive: the reference is cleared when the
+     * account is deleted.
+     */
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $updatedBy = null;
 
     #[ORM\Column(type: 'datetime_immutable')]

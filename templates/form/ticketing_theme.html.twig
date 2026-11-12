@@ -1,0 +1,91 @@
+{#
+    The form theme of the application.
+
+    It adapts the default Symfony form markup to the design system:
+    a grouped row, the `form__control` inputs, the role radio cards, and the
+    hints — the little badges that reveal their text on hover.
+#}
+
+{% block form_row %}
+    {# A standalone checkbox is a card, exactly like the radio group. #}
+    {% set isCheckbox = form.vars.type|default('') == 'checkbox' or 'checkbox' in form.vars.block_prefixes %}
+    {% if isCheckbox %}
+        <label class="form__card">
+            {{ form_widget(form) }}
+            <span class="form__card-text">
+                <span class="form__card-title">
+                    {{ label|trans({}, form.vars.translation_domain) }}
+                    {{ block('form_help') }}
+                </span>
+            </span>
+        </label>
+    {% else %}
+        <div class="form__group">
+            <div class="form__label-row">
+                {{ form_label(form) }}
+                {{ block('form_help') }}
+            </div>
+            {{ form_widget(form) }}
+            {{ form_errors(form) }}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block form_errors %}
+    {% if errors|length > 0 %}
+        {% for error in errors %}
+            <p class="form__error">{{ error.message }}</p>
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+
+{% block form_label %}
+    {% if label is not same as(false) %}
+        {% set required = required ? ' form__required' : '' %}
+        <label class="form__label" for="{{ id }}">
+            {{ label }}{% if required %}<span class="form__required" aria-hidden="true">*</span>{% endif %}
+        </label>
+    {% endif %}
+{% endblock %}
+
+{#
+    The help text is not displayed: it becomes a hint — a small badge that
+    reveals the text when it is hovered or focused.
+#}
+{% block form_help %}
+    {% if help is not empty %}
+        <span class="form__hint" tabindex="0" role="note"
+              data-tip="{{ help|trans({}, form.vars.translation_domain) }}"
+              aria-label="{{ help|trans({}, form.vars.translation_domain) }}">?</span>
+    {% endif %}
+{% endblock %}
+
+{#
+    The radio buttons are rendered as a row of selectable cards.
+
+    Each card carries a title and a description: the label of the choice is
+    written "Title — description" and is split here.
+#}
+{% block choice_widget_expanded %}
+    <div class="form__radios">
+        {%- for child in form %}
+            {%- set text = choice_translation_domain is same as(false) ? child.vars.label : child.vars.label|trans({}, choice_translation_domain) -%}
+            {%- set parts = text|split(' — ') -%}
+            <label class="form__card">
+                {{- form_widget(child) -}}
+                <span class="form__card-text">
+                    <span class="form__card-title">{{ parts[0] }}</span>
+                    {%- if parts|length > 1 %}
+                        <span class="form__card-desc">{{ parts[1] }}</span>
+                    {%- endif %}
+                </span>
+            </label>
+        {% endfor -%}
+    </div>
+{%- endblock choice_widget_expanded -%}
+
+{% block form_actions %}
+    <div class="form__actions">
+        {{ block('form_submit') }}
+    </div>
+{% endblock %}

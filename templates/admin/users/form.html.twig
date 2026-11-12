@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ user ? 'Edit the account' : 'New account' }}{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: user ? 'Edit the account' : 'New account',
+        subtitle: user
+            ? 'Change the profile, the role or the status of this account.'
+            : 'Give a new person access to the application.',
+        action_label: 'Back to the accounts',
+        action_path: path('admin_users'),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    {% include '_components/flash.html.twig' %}
+
+    {% set form %}
+        {{ form_start(form, {attr: {class: 'form'}}) }}
+
+            <div class="form__grid">
+                {{ form_row(form.firstName) }}
+                {{ form_row(form.lastName) }}
+            </div>
+
+            {{ form_row(form.email) }}
+
+            {% if form.plainPassword is defined %}
+                {{ form_row(form.plainPassword) }}
+            {% endif %}
+
+            <div class="form__grid">
+                {{ form_row(form.phone) }}
+                {{ form_row(form.isActive) }}
+            </div>
+
+
+            {{ form_row(form.role) }}
+
+            <div class="form__actions">
+                <button type="submit" class="button button--primary">
+                    {{ user ? 'Save the changes' : 'Create the account' }}
+                </button>
+                <a class="button button--ghost" href="{{ path('admin_users') }}">Cancel</a>
+                {% if user %}
+                    <a class="button button--ghost button--sm" href="{{ path('admin_users_password', {id: user.id}) }}">
+                        Set a new password
+                    </a>
+                {% endif %}
+            </div>
+        {{ form_end(form) }}
+    {% endset %}
+
+    {% include '_components/card.html.twig' with { body: form } %}
+{% endblock %}

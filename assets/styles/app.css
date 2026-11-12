@@ -1,3 +1,22 @@
-body {
-    background-color: skyblue;
-}
+/* ==============================================================================
+   Application stylesheet — the single entry point.
+   AssetMapper resolves the @import statements and rewrites the font URLs.
+   ========================================================================== */
+
+@import './_fonts.css';
+@import './_tokens.css';
+@import './_reset.css';
+@import './_base.css';
+@import './_layout.css';
+
+@import './_components/_button.css';
+@import './_components/_card.css';
+@import './_components/_badge.css';
+@import './_components/_form.css';
+@import './_components/_table.css';
+@import './_components/_feedback.css';
+@import './_components/_sidebar.css';
+@import './_components/_topbar.css';
+
+@import './_utilities.css';
+@import './_print.css';

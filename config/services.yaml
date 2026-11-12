@@ -19,5 +19,13 @@ services:
     App\:
         resource: '../src/'
 
+    # The user provider refuses the disabled accounts. Symfony 7 removed the
+    # generic UserChecker, so the check is made where the account is loaded.
+    App\Security\ActiveUserProvider:
+        arguments:
+            $registry: '@doctrine'
+            $classOrAlias: 'App\Entity\User'
+            $property: 'email'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

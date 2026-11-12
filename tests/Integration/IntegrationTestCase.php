@@ -16,4 +16,13 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 abstract class IntegrationTestCase extends KernelTestCase
 {
     use DoctrineTestTrait;
+
+    /**
+     * Boots the kernel and loads the fixtures.
+     */
+    protected function bootWithFixtures(): void
+    {
+        self::bootKernel();
+        $this->loadFixtures();
+    }
 }

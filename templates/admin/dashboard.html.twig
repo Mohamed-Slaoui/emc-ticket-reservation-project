@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: 'Dashboard',
+        subtitle: 'The configuration of the venue, at a glance.',
+        action_label: 'Accounts',
+        action_path: path('admin_users'),
+        action_icon: 'users',
+        action_variant: 'outline',
+    } %}
+
+    {% include '_components/flash.html.twig' %}
+
+    <div class="grid grid--stats" style="margin-bottom: var(--space-5);">
+        {% for stat in stats %}
+            <div class="stat {{ loop.index == 1 ? 'stat--accent' : '' }}">
+                <div class="stat__head">
+                    <span class="stat__label">{{ stat.label }}</span>
+                    <span class="card__icon" style="{{ loop.index == 1 ? 'background: rgba(255,255,255,.16); color: #fff;' : '' }}">
+                        {{ icon(stat.icon, 'icon icon--sm') }}
+                    </span>
+                </div>
+                <span class="stat__value">{{ stat.value }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% set policy %}
+        {% if hold_duration %}
+            <p class="stat__value" style="font-size: var(--text-2xl);">
+                {{ hold_duration }} <span class="u-muted" style="font-size: var(--text-md); font-weight: 400;">minutes</span>
+            </p>
+        {% else %}
+            <p class="u-muted">No policy has been configured yet.</p>
+        {% endif %}
+    {% endset %}
+
+    {% set steps %}
+        <div class="list">
+            <div class="list__item">
+                <span class="card__icon">{{ icon('venue', 'icon icon--sm') }}</span>
+                <div class="list__main">
+                    <p class="list__title">Venue, rooms and seats</p>
+                    <p class="list__meta">Describe the physical venue.</p>
+                </div>
+                <span class="badge badge--accent">Next</span>
+            </div>
+            <div class="list__item">
+                <span class="card__icon">{{ icon('layout', 'icon icon--sm') }}</span>
+                <div class="list__main">
+                    <p class="list__title">Seating layouts</p>
+                    <p class="list__meta">Group the seats into zones.</p>
+                </div>
+            </div>
+            <div class="list__item">
+                <span class="card__icon">{{ icon('calendar', 'icon icon--sm') }}</span>
+                <div class="list__main">
+                    <p class="list__title">Events and performances</p>
+                    <p class="list__meta">Schedule the shows.</p>
+                </div>
+            </div>
+        </div>
+    {% endset %}
+
+    <div class="grid grid--halves">
+        {% include '_components/card.html.twig' with {
+            title: 'Booking policy',
+            subtitle: 'The temporary hold applied to every reservation.',
+            body: policy,
+        } %}
+        {% include '_components/card.html.twig' with {
+            title: 'Next steps',
+            subtitle: 'The administration screens are delivered one by one.',
+            body: steps,
+        } %}
+    </div>
+{% endblock %}

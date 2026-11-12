@@ -8,7 +8,7 @@ built for the **PFE Challenge EMC**.
 | **Subject** | **Subject 1 of 4 — Performance Venue Ticketing** |
 | **Stack** | Symfony 7.4 · PHP 8.2+ · MySQL 8 · Doctrine ORM · Migrations · Twig |
 | **Deadline** | Sunday, November 15, 2026 at 23:59 (Morocco time) |
-| **Status** | 🟡 **Phase 1 complete — core domain model in place** |
+| **Status** | 🟡 **Phase 2 complete — authentication and administration UI** |
 
 ---
 
@@ -105,6 +105,25 @@ Three rules are enforced server-side and are the basis of the whole authorisatio
 
 A box-office employee **cannot** cancel a confirmed reservation — that is an administrator
 action, and it always triggers a full refund.
+
+There is **no public registration**: the accounts are created by the venue
+administrator, from the administration screens.
+
+Signing in is protected by a CSRF token, the passwords are hashed (bcrypt), and a
+disabled account cannot sign in — it is reported as an unknown address, so the visitor
+learns nothing about the accounts that exist.
+
+### The interface
+
+The administration screens share a single **design system**: a token file holds every
+colour, radius, spacing and shadow, and the components (button, card, badge, table, form,
+alert, pagination, icon set) are reused across the screens. The stylesheet is plain CSS
+served by AssetMapper — **no build step and no Node toolchain** — and the webfont is
+self-hosted, so the application makes no external request at runtime.
+
+The forms are compact by design: the related fields share a line, the roles are a row of
+selectable cards, and the guidance is a small badge that reveals its text on hover — so a
+whole screen fits in one viewport.
 
 ## 7. Architecture overview
 
@@ -326,8 +345,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | Phase | Description | Status |
 |---|---|---|
 | 0 | Project inspection | **Completed** |
-| 1 | Core domain foundation | **Review required** |
-| 2 | Authentication and authorization | Pending |
+| 1 | Core domain foundation | **Completed** |
+| 2 | Authentication and authorization | **Review required** |
 | 3 | Venue and room administration | Pending |
 | 4 | Seating layouts and zones | Pending |
 | 5 | Events and performances | Pending |
@@ -354,15 +373,18 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
   invariant, the reservation / payment / ticket / refund lifecycles, the price snapshots,
   and the refund cap.
 - The uniqueness rules enforced at the **database** level and proven by integration tests.
-- 81 automated tests, all green.
-- The project roadmap, conventions and known issues in
-  [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
+- **Authentication and authorisation** — sign in, sign out, the role hierarchy
+  (`ADMIN` ⊃ `BOX_OFFICE` ⊃ `CUSTOMER`), the access rules, and the administration of the
+  accounts (list, create, edit, enable, disable, delete, reset password). A disabled account
+  cannot sign in.
+- **The design system** — a self-hosted webfont, the Ocean Teal palette, and a set of
+  reusable components (buttons, cards, badges, tables, forms, alerts, pagination, icons).
+  The application shell — sidebar, top bar, content area — is responsive.
 
 **What comes next**
 
-Phase 2 establishes the identity layer: authentication, password hashing, the role
-hierarchy (`CUSTOMER`, `BOX_OFFICE`, `ADMIN`) and the ownership checks that protect a
-customer's reservations.
+Phase 3 opens the administration of the physical venue: the venues, the rooms and the
+seats, on top of the shell that is already in place.
 
 ## 18. Known limitations and MVP boundaries
 

@@ -1,0 +1,20 @@
+{#
+    Alert — an inline message.
+
+    Usage:
+        {% include '_components/alert.html.twig' with {
+            variant: 'success',
+            iconName: 'check',
+            message: 'The account has been created.',
+        } %}
+#}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+<div class="alert {{ variant is defined ? 'alert--' ~ variant : '' }}" role="alert">
+    <span class="alert__icon">
+        {{ icon(iconName|default('info'), 'icon icon--sm') }}
+    </span>
+
+    <div class="alert__body">{{ message|default('')|raw }}</div>
+</div>

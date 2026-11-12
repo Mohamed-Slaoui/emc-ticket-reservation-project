@@ -1,0 +1,59 @@
+/* ==============================================================================
+   Print — the box office prints tickets and lists on paper.
+   The navigation and the decorative surfaces are removed; the content is
+   printed in black on white.
+   ========================================================================== */
+
+@media print {
+    :root {
+        --canvas: #FFFFFF;
+        --surface: #FFFFFF;
+        --surface-muted: #FFFFFF;
+        --text: #000000;
+        --text-muted: #333333;
+        --border: #CCCCCC;
+    }
+
+    body {
+        background: #FFFFFF;
+    }
+
+    .shell {
+        display: block;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .sidebar,
+    .topbar,
+    .page-header__actions,
+    .pagination,
+    .button,
+    .alert__close,
+    .form__actions {
+        display: none !important;
+    }
+
+    .card,
+    .stat {
+        border: 1px solid #CCCCCC;
+        box-shadow: none;
+        break-inside: avoid;
+    }
+
+    a {
+        color: #000000;
+        text-decoration: none;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+}
+
+.print-only {
+    display: none;
+}

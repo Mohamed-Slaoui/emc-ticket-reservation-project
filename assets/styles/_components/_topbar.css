@@ -1,0 +1,144 @@
+/* ==============================================================================
+   Topbar — the header strip of the reference: actions on the right.
+   ========================================================================== */
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    /* min-height: var(--topbar-height); */
+    padding: var(--space-2) var(--space-1) var(--space-4);
+}
+
+.topbar__left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.topbar__right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* The search field of the reference. */
+.search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 22rem;
+}
+
+.search__icon {
+    position: absolute;
+    left: var(--space-3);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.search__input {
+    width: 100%;
+    padding: var(--space-2) var(--space-3) var(--space-2) var(--space-10);
+    background: var(--surface-muted);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-base);
+    color: var(--text);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.search__input::placeholder {
+    color: var(--text-muted);
+}
+
+.search__input:hover {
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+.search__input:focus {
+    outline: none;
+    background: var(--surface);
+    border-color: var(--secondary);
+    box-shadow: var(--shadow-focus);
+}
+
+.search__shortcut {
+    position: absolute;
+    right: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    pointer-events: none;
+}
+
+/* A round icon button. */
+.topbar__icon-button {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-pill);
+    color: var(--text-muted);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.topbar__icon-button:hover {
+    background: var(--surface-muted);
+    color: var(--primary);
+}
+
+.topbar__divider {
+    width: 1px;
+    height: 1.75rem;
+    margin: 0 var(--space-2);
+    background: var(--border);
+}
+
+/* The account block of the reference: avatar, name and email. */
+.account {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
+    border-radius: var(--radius-pill);
+    color: var(--text);
+}
+
+.account:hover {
+    background: var(--surface-muted);
+    color: var(--primary);
+}
+
+.account__text {
+    min-width: 0;
+}
+
+.account__name {
+    font-weight: var(--weight-bold);
+    font-size: var(--text-base);
+    line-height: 1.3;
+}
+
+.account__mail {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+
+@media (width <= 48rem) {
+    .account__text {
+        display: none;
+    }
+}

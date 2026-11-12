@@ -1,0 +1,47 @@
+{#
+    Button — the pill-shaped action of the reference.
+
+    A macro can only use the macros imported **inside its own body**: the
+    imports of the template body are not available when the macro is called
+    from another template.
+
+    Usage:
+        {% from '_components/buttons.html.twig' import button %}
+        {{ button('Add user', path('admin_users_new'), 'primary', 'plus') }}
+        {{ button('Cancel', path('admin_users'), 'outline', null, 'sm') }}
+#}
+
+{% macro button(label, path = null, variant = 'primary', iconName = null, size = null, attrs = '') %}
+    {% from '_partials/icons.html.twig' import icon %}
+
+    {%- set classes = 'button button--' ~ variant -%}
+    {%- if size -%}{%- set classes = classes ~ ' button--' ~ size -%}{%- endif -%}
+    {%- if path -%}
+        <a class="{{ classes }}" href="{{ path }}"{{ attrs|raw }}>
+            {%- if iconName -%}{{ icon(iconName, 'icon icon--sm') }}{%- endif -%}
+            <span>{{ label }}</span>
+        </a>
+    {%- else -%}
+        <button type="submit" class="{{ classes }}"{{ attrs|raw }}>
+            {%- if iconName -%}{{ icon(iconName, 'icon icon--sm') }}{%- endif -%}
+            <span>{{ label }}</span>
+        </button>
+    {%- endif -%}
+{% endmacro %}
+
+{# A round icon-only action, as used on the statistic cards. #}
+{% macro iconButton(iconName, path = null, label, inverse = false, attrs = '') %}
+    {% from '_partials/icons.html.twig' import icon %}
+
+    {%- set classes = 'button button--circle' -%}
+    {%- if inverse -%}{%- set classes = classes ~ ' button--inverse' -%}{%- endif -%}
+    {%- if path -%}
+        <a class="{{ classes }}" href="{{ path }}" aria-label="{{ label }}" title="{{ label }}"{{ attrs|raw }}>
+            {{ icon(iconName, 'icon icon--sm') }}
+        </a>
+    {%- else -%}
+        <button type="button" class="{{ classes }}" aria-label="{{ label }}" title="{{ label }}"{{ attrs|raw }}>
+            {{ icon(iconName, 'icon icon--sm') }}
+        </button>
+    {%- endif -%}
+{% endmacro %}
