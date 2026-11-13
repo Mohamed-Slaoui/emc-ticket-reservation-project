@@ -361,8 +361,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 3 | Venue and room administration | **Completed** |
 | 4 | Seating layouts and zones | **Completed** |
 | 5 | Events and performances | **Completed** |
-| 6 | Tariffs and pricing | **Review required** |
-| 7 | Reservation foundation | Pending |
+| 6 | Tariffs and pricing | **Completed** |
+| 7 | Reservation foundation | **Review required** |
 | 8 | Customer booking | Pending |
 | 9 | Box-office sales | Pending |
 | 10 | Online payments | Pending |
@@ -405,11 +405,15 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 - **The prices** — set per zone and per tariff, and **versioned**: changing a price creates
   a new version and retires the old one, so an already sold ticket keeps its price. An event
   is published only when every zone and every tariff is priced.
+- **The reservation engine** — holds with row locks and an availability re-check, price
+  snapshots, the group rule (BR-12), the online-channel authorization of the full tariff,
+  expiry of unpaid holds (`app:holds:expire`), cancellation of an unpaid hold. One engine
+  shared by both channels (INV-10).
 
 **What comes next**
 
-Phase 7 opens the inventory: reservation holds, availability, and the foundation of the
-booking flow.
+Phase 8 opens the customer booking screen: browse published performances, the seat map, the
+hold and payment flow.
 
 ## 18. Known limitations and MVP boundaries
 

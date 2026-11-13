@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Reservation;
 use App\Entity\User;
+use App\Enum\ReservationStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -32,5 +33,29 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * The hold reservations whose expiry time has passed and whose seats are
+     * therefore due back in sale (BR-05).
+     *
+     * @return list<Reservation>
+     */
+    public function findExpiredHeld(): array
+    {
+        /** @var list<Reservation> $reservations */
+        $reservations = $this->createQueryBuilder('r')
+            ->leftJoin('r.items', 'i')
+            ->addSelect('i')
+            ->leftJoin('r.performancePlaces', 'pp')
+            ->addSelect('pp')
+            ->andWhere('r.status = :held')
+            ->setParameter('held', ReservationStatus::Held)
+            ->andWhere('r.expiresAt <= :now')
+            ->setParameter('now', new \DateTimeImmutable())
+            ->getQuery()
+            ->getResult();
+
+        return $reservations;
     }
 }

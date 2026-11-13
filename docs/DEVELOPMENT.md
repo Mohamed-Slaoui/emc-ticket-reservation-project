@@ -335,7 +335,24 @@ rules instead of editing them.
 | The compilation of zones × tariffs is deduplicated by the generated column — the database is the only guarantee. | `uk_performance_price_current` |
 | An unreadable price is rejected: the administrator sees the reason, the form is not saved. | `PerformancePriceService::parseAmount()` + `PricingValidationException` (rendered by `RendersUnprocessableForm`) |
 
-### 4.8 The cascading deletions
+### 4.8 The reservation engine
+
+WF-1, Phase 7 (docs/WORKFLOWS.md). Both the customer channel (Phase 8) and the box office
+(Phase 9) go through the same engine — one availability rule, INV-10.
+
+| Rule | Where |
+|---|---|
+| The hold locks the inventory rows, then re-checks availability — two holds issued at the same moment are serialised and only one sees a seat still on sale. | `ReservationService::hold()` + `PerformancePlaceRepository::findForLockByIds()` |
+| The full critical section is one transaction: availability re-checked, reservation + items created with price snapshots, seats marked HELD until the booking policy's expiry. | `ReservationService::hold()` |
+| The hold expiry is computed once, at hold creation. Changing the policy afterwards does not affect holds in progress (BR-04). | `ReservationService::holdExpiry()` |
+| The online channel sells the full tariff only (Q5); reduced needs the document verified in person, at the counter. | `ReservationService::hold()` — `SalesChannel::Online` |
+| The group tariff needs at least 5 seats in the same reservation, all at the group rate. | `ReservationService::hold()` — BR-12 |
+| A hold is confirmed as `CONFIRMED` only while not expired; after expiry the call is refused (INV-03). | `Reservation::confirm()` |
+| The hold expiry engine — reservation → `EXPIRED`, seats → `AVAILABLE`, items → `EXPIRED`; history is kept. Exposed as the `app:holds:expire` command for the scheduler. | `ReservationService::expireDueHolds()` + `ExpireHoldsCommand` |
+| An unpaid hold is cancelled by its author (or the customer of that reservation); the seats are released, the items `CANCELLED` (BR-09). | `ReservationService::cancelHeldReservation()` |
+| A confirmed reservation is cancelled by an administrator through the refund flow, never here. | Phase 10/12 |
+
+### 4.9 The cascading deletions
 
 The foreign keys are strict, so a deletion removes **what it holds**, in this order:
 
@@ -357,7 +374,7 @@ The seat map is a **plain form**, not a Symfony form: it holds one checkbox per 
 room — four hundred of them — and the browser sends the checked seats. The zone colours
 come from the token file and follow the position of the zone in the configuration.
 
-### 4.9 Documentation
+### 4.10 Documentation
 
 - `README.md` is a **living document**: it is updated in the same phase as any feature,
   dependency, command, integration or setup requirement it introduces.
@@ -381,8 +398,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 3 | Venue, room and physical place administration | **Completed** |
 | 4 | Seating layout and zone management | **Completed** |
 | 5 | Events and performances | **Completed** |
-| 6 | Tariffs and performance pricing | **Review required** |
-| 7 | Inventory availability and reservation foundation | Pending |
+| 6 | Tariffs and performance pricing | **Completed** |
+| 7 | Inventory availability and reservation foundation | **Review required** |
 | 8 | Customer booking experience | Pending |
 | 9 | Box-office sales | Pending |
 | 10 | Online payment integration | Pending |
