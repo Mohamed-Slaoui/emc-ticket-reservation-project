@@ -180,7 +180,7 @@ class EntityMappingTest extends IntegrationTestCase
 
         self::assertCount(4, $tariffs);
         self::assertSame(
-            ['GROUPE', 'INVITATION', 'PLEIN', 'REDUIT'],
+            ['FULL', 'GROUP', 'INVITATION', 'REDUCED'],
             array_map(static fn (Tariff $t) => $t->getCode(), $tariffs),
         );
 
@@ -188,7 +188,7 @@ class EntityMappingTest extends IntegrationTestCase
         // (docs/DECISIONS.md Q5).
         foreach ($tariffs as $tariff) {
             self::assertSame(
-                'REDUIT' === $tariff->getCode(),
+                'REDUCED' === $tariff->getCode(),
                 $tariff->requiresEligibilityProof(),
             );
         }

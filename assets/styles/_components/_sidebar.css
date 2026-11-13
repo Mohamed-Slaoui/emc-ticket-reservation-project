@@ -4,10 +4,10 @@
 
 .sidebar {
     position: sticky;
-    top: var(--space-4);
+    top: var(--space-0);
     align-self: start;
     /* height: calc(100vh - var(--space-8) - (2 * var(--space-5))); */
-    height: 94vh;
+    height: 100vh;
     overflow-y: auto;
     overscroll-behavior: contain;
     display: flex;
@@ -15,7 +15,7 @@
     gap: var(--space-6);
     padding: var(--space-5) var(--space-4);
     background: var(--surface-muted);
-    border-radius: var(--radius-xl);
+    /* border-radius: var(--radius-xl); */
 }
 
 /* Brand ------------------------------------------------------------------- */

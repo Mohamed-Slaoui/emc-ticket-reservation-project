@@ -281,6 +281,13 @@ php bin/console doctrine:migrations:status           # inspect
 php bin/console doctrine:schema:validate             # mapping ↔ database check
 ```
 
+Applying the migrations is **enough to install the venue** — the initial migration creates the
+schema, and `Version20261113215513` also **seeds the four tariff categories** (full, reduced,
+group, invitation) into the `tariff` table. The four tariffs are part of the product, not of the
+demo data: no fixture load is needed, and no fifth category can be inserted — the codes are
+`CHECK`-constrained and the labels are a generated column. (The development fixtures also load
+them; the two paths derive from the same `TariffCode` enum.)
+
 The test database uses the `app_test` suffix automatically.
 
 ## 13. Running the tests
@@ -353,8 +360,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 2 | Authentication and authorization | **Completed** |
 | 3 | Venue and room administration | **Completed** |
 | 4 | Seating layouts and zones | **Completed** |
-| 5 | Events and performances | **Review required** |
-| 6 | Tariffs and pricing | Pending |
+| 5 | Events and performances | **Completed** |
+| 6 | Tariffs and pricing | **Review required** |
 | 7 | Reservation foundation | Pending |
 | 8 | Customer booking | Pending |
 | 9 | Box-office sales | Pending |
@@ -395,11 +402,14 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 - **The events and their performances** — a programme, its dated shows, the configuration
   each show sells and the **inventory** it generates. An event is published only when it is
   complete: the administration shows the four checks and the reason when one fails.
+- **The prices** — set per zone and per tariff, and **versioned**: changing a price creates
+  a new version and retires the old one, so an already sold ticket keeps its price. An event
+  is published only when every zone and every tariff is priced.
 
 **What comes next**
 
-Phase 6 opens the pricing: the four tariffs, and the price of each tariff for each zone
-of each performance.
+Phase 7 opens the inventory: reservation holds, availability, and the foundation of the
+booking flow.
 
 ## 18. Known limitations and MVP boundaries
 

@@ -119,7 +119,7 @@ This is the model's reason for being: **reusing the venue from one event to anot
 | `LayoutPlace` | Associates a physical seat with a zone **within a given configuration**. |
 | `Event` | Cultural event (concert, theatre, conference). |
 | `Performance` | Dated performance of an event; carries the sales hours. |
-| `Tariff` | Pricing category (full, reduced, group, invitation). |
+| `Tariff` | Pricing category (full, reduced, group, invitation) — a **fixed catalogue** of four, enforced by the database. |
 | `PerformancePrice` | Price of a tariff for a performance and a zone (**versioned**). |
 | `PerformancePlace` | Sellable inventory of a seat for a performance (state + current allocation). |
 | `User` | Account (customer, box-office employee, administrator) with roles. |
@@ -219,7 +219,7 @@ The diagram describes the tables, primary keys (`PK`), foreign keys (`FK`), and 
 | `reservation_item` | `UNIQUE (reservation_id, performance_place_id)` | The same seat appears only once in a reservation. |
 | `ticket` | `UNIQUE (reservation_item_id)`, `UNIQUE (ticket_number)`, `UNIQUE (qr_token)` | One ticket per item, unique references. |
 | `user` | `UNIQUE (email)` | One account per email. |
-| `tariff` | `UNIQUE (code)` | One row per tariff code. |
+| `tariff` | `UNIQUE (code)` + `CHECK (code IN ('FULL','REDUCED','GROUP','INVITATION'))` | The four pricing categories — the catalogue is fixed; no fifth category can be inserted. `name` is a generated column computed from the code. |
 | `outbox_message` | `UNIQUE (idempotency_key)` | Idempotent integration event. |
 
 ### 5.3 Cross-cutting rules (beyond foreign keys)

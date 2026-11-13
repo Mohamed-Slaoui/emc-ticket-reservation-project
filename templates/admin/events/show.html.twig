@@ -116,6 +116,10 @@
                                         </td>
                                         <td class="table__cell--actions">
                                             <span class="u-flex u-gap-2" style="justify-content: flex-end;">
+                                                <a class="button button--ghost button--icon" href="{{ path('admin_performances_prices', {eventId: event.id, performanceId: performance.id}) }}"
+                                                   title="Prices" aria-label="Prices of the performance of {{ performance.startsAt|date('d/m/Y') }}">
+                                                    {{ icon('pricing', 'icon icon--sm') }}
+                                                </a>
                                                 <a class="button button--ghost button--icon" href="{{ path('admin_performances_edit', {eventId: event.id, id: performance.id}) }}"
                                                    title="Edit" aria-label="Edit the performance">
                                                     {{ icon('pencil', 'icon icon--sm') }}

@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tariffs{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: 'Tariffs',
+        subtitle: 'The four pricing categories of the venue. The catalogue is fixed — it cannot be created, renamed or deactivated from here.',
+    } %}
+
+    {% set body %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Eligibility</th>
+                        <th>Who may apply it</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tariff in tariffs %}
+                        <tr>
+                            <td><span class="u-mono">{{ tariff.code }}</span></td>
+                            <td>
+                                <div class="table__identity-text">
+                                    <div class="table__identity-name">{{ tariff.name }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if tariff.requiresEligibilityProof %}
+                                    Supporting document verified in person
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tariff.sellableOnline %}
+                                    Everyone — online, box office, admin
+                                {% else %}
+                                    Box office or administrator
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endset %}
+
+    {% include '_components/card.html.twig' with { variant: 'card--flat', body: body } %}
+{% endblock %}

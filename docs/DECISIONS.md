@@ -149,6 +149,24 @@ The five questions from the specification, with the chosen answer and its justif
   refusal names the room, the conflicting show and its interval. The conflict check lives
   in `PerformanceService` — the single authority, used by the creation and the update.
 
+### 2026-11-13 - The tariff catalogue is fixed
+
+- **Decision:** the venue sells exactly **four** pricing categories — full, reduced, group,
+  invitation — and this is not configurable. The catalogue belongs to the application
+  (`App\Enum\TariffCode`), is seeded by the migrations (and the development fixtures), and
+  is closed at the database level with `ck_tariff_code` (`code IN ('FULL','REDUCED','GROUP','INVITATION')`).
+- **Decision:** the tariff name is a **generated column** (`name`), computed from the code
+  by the database. It cannot be renamed, not even with SQL — like `performance_price.current_combo`.
+  The eligibility rule (a supporting document is verified in person for the reduced tariff) and
+  the channel rule (full tariff only online) are **derived from the code**, never stored or edited.
+- **Decision:** production installs get the four tariffs from the migrations alone; the
+  development fixtures still load them, but they are no longer the only source. The
+  publication check (every zone × the four catalogue tariffs priced) therefore holds in
+  every environment.
+- **Impact:** the tariff screen (`/admin/tariffs`) is a read-only reference; the edit screen
+  and all tariff write paths were removed. A fifth category is a deliberate, reviewed change
+  (code + migration) — never something the interface can do.
+
 ### Q5. Who is allowed to sell which tariff?
 
 > **Answer: Rights depend on the tariff and the role. The online channel is reserved for the full tariff; reduced, group, and invitation tariffs go through the box office or an admin.**
@@ -162,9 +180,10 @@ The five questions from the specification, with the chosen answer and its justif
 | **Group** | Box office or admin only | Minimum 5 seats in the same reservation, all at the group rate. |
 | **Invitation** | Box office or admin only | By authorization. |
 
-- `Tariff.requiresEligibilityProof` indicates whether verification is required.
+- The eligibility rule is derived from the tariff's code (a property of the category, not a setting): the reduced tariff requires a supporting document verified in person.
 - Checks are performed **server-side**, never just hidden in the interface.
 - `ROLE_CUSTOMER` is **not** a seller role.
+- The catalogue itself is fixed: the four categories cannot be created, renamed, removed or deactivated (see the 2026-11-13 log entry).
 
 ---
 
@@ -280,4 +299,5 @@ These points are **excluded** from the first version to guarantee a solid delive
 | Hold, payment, refund, and tariff rules | 2026-11-09 | Sections 3 and 4 of this document |
 | MySQL 8 as the only database target; `.env` committed | 2026-11-10 | Section 1 — Phase 0 entry |
 | Phase roadmap, conventions and known issues | 2026-11-10 | [`DEVELOPMENT.md`](DEVELOPMENT.md) |
+| The tariff catalogue is fixed (4 categories, enforced by the database) | 2026-11-13 | Section 1 — the 2026-11-13 entry, and Q5 |
 | Approved business workflows | 2026-11-10 | [`WORKFLOWS.md`](WORKFLOWS.md) |

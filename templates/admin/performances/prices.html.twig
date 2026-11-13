@@ -1,0 +1,102 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}Prices — {{ performance.event.title }}{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: 'Prices',
+        subtitle: performance.startsAt|date('d/m/Y H:i') ~ ' · ' ~ performance.seatingLayout.name ~ ' — ' ~ performance.seatingLayout.room.name,
+        action_label: 'Back to the event',
+        action_path: path('admin_events_show', {id: event.id}),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    {% if missing > 0 %}
+        <div class="alert alert--warning">
+            <span class="alert__icon">{{ icon('alert', 'icon icon--sm') }}</span>
+            <div class="alert__body">
+                <strong>{{ missing }} price(s) missing.</strong>
+                The event cannot be published until this is done.
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert--success">
+            <span class="alert__icon">{{ icon('check', 'icon icon--sm') }}</span>
+            <div class="alert__body">
+                Every combination is priced. The event can be published.
+            </div>
+        </div>
+    {% endif %}
+
+    {% include '_components/flash.html.twig' %}
+
+    <form method="post" class="pricing__form" data-turbo="false">
+        <input type="hidden" name="_token" value="{{ csrf_token('save_prices_' ~ performance.id) }}">
+
+        <div class="card card--flat">
+            <div class="card__body">
+                <div class="table-wrap">
+                    <table class="table pricing__table">
+                        <thead>
+                            <tr>
+                                <th>Zone</th>
+                                {% for tariff in tariffs %}
+                                    <th class="pricing__th" title="{{ tariff.rule() }}">
+                                        {{ tariff.name }}
+                                        <span class="pricing__cell-note">{{ tariff.code }}</span>
+                                    </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for zone in zones %}
+                                <tr>
+                                    <td>
+                                        <div class="table__identity-text">
+                                            <div class="table__identity-name">{{ zone.name }}</div>
+                                            <div class="table__identity-mail u-mono">{{ zone.code }}</div>
+                                        </div>
+                                    </td>
+                                    {% for tariff in tariffs %}
+                                        {% set price = matrix[zone.id] is defined and matrix[zone.id][tariff.id] is defined ? matrix[zone.id][tariff.id] : null %}
+                                        <td>
+                                            <label class="pricing__cell" for="price_{{ zone.id }}_{{ tariff.id }}">
+                                                <span class="u-visually-hidden">{{ zone.name }} — {{ tariff.name }}</span>
+                                                <span class="pricing__input">
+                                                    <span class="pricing__currency">MAD</span>
+                                                    <input id="price_{{ zone.id }}_{{ tariff.id }}"
+                                                           class="form__control pricing__control"
+                                                           type="number"
+                                                           step="0.01"
+                                                           min="0"
+                                                           name="price[{{ zone.id }}][{{ tariff.id }}]"
+                                                           value="{{ price ? price.amount : '' }}"
+                                                           placeholder="—">
+                                                </span>
+                                                {% if price %}
+                                                    <span class="pricing__version">v{{ price.version }}</span>
+                                                {% endif %}
+                                            </label>
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="u-muted u-small" style="margin: var(--space-4) 0;">
+                    Empty a cell to remove that price. When a price changes, a new version is created and the old one is retired — the prices of sold tickets never change.
+                </p>
+
+                <div class="form__actions">
+                    <button type="submit" class="button button--primary">Save the prices</button>
+                    <a class="button button--ghost" href="{{ path('admin_events_show', {id: event.id}) }}">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

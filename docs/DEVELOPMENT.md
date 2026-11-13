@@ -305,10 +305,37 @@ The publication checks are the four of the workflow:
 1. the event has a performance;
 2. the performance has a configuration;
 3. the inventory is generated;
-4. the prices are set — **this one arrives with the pricing phase (Phase 6)**, so an event
-   cannot be published before then. The check is already in place and reports it.
+4. the prices are set — every zone × the four catalogue tariffs has a current price.
 
-### 4.7 The cascading deletions
+### 4.7 The prices
+
+A price is set per **zone** and per **tariff**, and it is **versioned**: a change
+retires the previous version and creates the next one, so the price of an already
+sold ticket is never altered. The reservations reference the exact price row that was
+sold.
+
+A **tariff** is not administered. The venue sells exactly four pricing categories —
+full, reduced, group, invitation — fixed by the application (`App\Enum\TariffCode`),
+seeded by the migrations (and the development fixtures), and enforced by the database:
+`ck_tariff_code` (`code IN (…)`), a **generated `name`** computed from the code, and
+no setter on the entity. The eligibility rule (a supporting document is verified in
+person for the reduced tariff) and the channel rule (full tariff only online) are
+derived from the code. `/admin/tariffs` is a read-only reference: it documents the
+rules instead of editing them.
+
+| Rule | Where |
+|---|---|
+| The catalogue is the `TariffCode` enum — one definition for the seed, the migration, the matrix and the reference screen. | `App\Enum\TariffCode` + `TariffRepository::catalogue()` |
+| The four categories cannot be created, renamed, removed or deactivated. | `ck_tariff_code` + generated `name` + no write path |
+| A catalogue row that goes missing counts as **unpriced** — an incomplete catalogue can never be published as priced. | `PerformancePriceService::missingPriceCount()` |
+| Saving the matrix creates a new version when a price differs from the current one. Unchanged cells are left alone. | `PerformancePriceService::save()` |
+| Clearing a cell **unsets** the price of that combination. Pricing stays incomplete and the event cannot be published until it is filled again. | `PerformancePriceService::save()` |
+| The save runs in a transaction in which the performance row is locked. | `PerformancePriceService::save()` |
+| The retire is flushed **before** the new version is inserted: the generated column unique key `current_combo` forbids two rows claiming the same combination at once. | `PerformancePriceService::save()` |
+| The compilation of zones × tariffs is deduplicated by the generated column — the database is the only guarantee. | `uk_performance_price_current` |
+| An unreadable price is rejected: the administrator sees the reason, the form is not saved. | `PerformancePriceService::parseAmount()` + `PricingValidationException` (rendered by `RendersUnprocessableForm`) |
+
+### 4.8 The cascading deletions
 
 The foreign keys are strict, so a deletion removes **what it holds**, in this order:
 
@@ -330,7 +357,7 @@ The seat map is a **plain form**, not a Symfony form: it holds one checkbox per 
 room — four hundred of them — and the browser sends the checked seats. The zone colours
 come from the token file and follow the position of the zone in the configuration.
 
-### 4.6 Documentation
+### 4.9 Documentation
 
 - `README.md` is a **living document**: it is updated in the same phase as any feature,
   dependency, command, integration or setup requirement it introduces.
@@ -353,8 +380,8 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 2 | Authentication, users and authorisation | **Completed** |
 | 3 | Venue, room and physical place administration | **Completed** |
 | 4 | Seating layout and zone management | **Completed** |
-| 5 | Events and performances | **Review required** |
-| 6 | Tariffs and performance pricing | Pending |
+| 5 | Events and performances | **Completed** |
+| 6 | Tariffs and performance pricing | **Review required** |
 | 7 | Inventory availability and reservation foundation | Pending |
 | 8 | Customer booking experience | Pending |
 | 9 | Box-office sales | Pending |
@@ -457,10 +484,13 @@ Carried forward from the Phase 0 inspection. Each one names its target phase.
 | F20 | The sign in answered *"Invalid CSRF token"* once the session had recorded another CSRF strategy. The `submit`, `authenticate` and `logout` tokens were **stateless** (double-submit cookie + header), but a plain form posts its token before the script rewrites it — so the sign in fell back on the `Origin` header and broke as soon as a Turbo submission had used the cookie. | **Phase 4** — the tokens are stored in the session (`config/packages/csrf.yaml`), and the sign in and the sign out are plain navigations. |
 | F21 | A venue, a room or a place could not be deleted as soon as it held something: the foreign keys are strict, and the administration refused the deletion instead of removing what it held. | **Phase 4** — the deletions cascade: a venue takes its rooms, their configurations and their seats; a room takes its configurations and its seats; a place leaves the configurations it was mapped in. Only what a performance has already sold survives, and the confirmation warns about it. |
 | F22 | The event form was named `EventType`, like the enumeration it uses, and the route parameter `eventId` did not map to the `$event` argument. | **Phase 5** — the enumeration is referenced by its fully qualified name, and the parameter is mapped with `#[MapEntity(id: 'eventId')]`. |
+| F26 | A form that could not be saved (a conflicting show, a duplicate code) re-rendered with **200**. Turbo refuses a 200 that is not a redirect, so the page did not change and the administrator saw nothing — the error was silent. | **Phase 5** — such a form answers **422**, like an invalid form: Turbo renders it, and the administrator sees the message. |
+| F27 | Retiring and creating a price version in a single flush hit the generated-column unique key `uk_performance_price_current`: Doctrine inserts the new row before it updates the old one, and for a moment two rows claim to be the current price of the same combination. | **Phase 6** — the retire is flushed first, freeing the unique key before the new version is inserted. |
+| F28 | The four tariffs were seeded **only** by the development fixtures — a production database built from migrations alone would have had no catalogue: no tariff to price, no matrix, no way to publish an event. | **Phase 6** — migration `Version20261113215513` installs the four tariffs (built from `TariffCode`), so production gets the catalogue through migrations alone. |
+| F29 | The tariff screen let an administrator rename a tariff, deactivate it, or flag a different eligibility rule — the four approved categories could drift from what the reports and the eligibility rules assume, and a fifth category could not be excluded by the application. | **Phase 6** — the catalogue is fixed: no write path remains in the UI, no setter exists on the entity, the codes are `CHECK`-constrained (`ck_tariff_code`), the label is a generated column, and the eligibility rule is derived from the code. |
 | F23 | The demo data had no event, and a fixture that queried the database before flushing found nothing: the inventory of the performance was empty. | **Phase 5** — the demo data holds a draft event, and the fixture flushes before it queries. |
 | F24 | Deleting an event that had a performance answered **500**: the foreign key of the performances is strict. | **Phase 5** — the deletion is refused with a clear alert ("This event has N performances: delete them first"), and the performances are deleted one by one, each with its inventory. |
 | F25 | Two performances could be scheduled on the same room at the same time: the room was double-booked, and nothing in the model forbade it. | **Phase 5** — the room is derived through the configuration, the room row is locked, and the scheduling is refused when the room is occupied. |
-| F26 | A form that could not be saved (a conflicting show, a duplicate code) re-rendered with **200**. Turbo refuses a 200 that is not a redirect, so the page did not change and the administrator saw nothing — the error was silent. | **Phase 5** — such a form answers **422**, like an invalid form: Turbo renders it, and the administrator sees the message. |
 
 ---
 

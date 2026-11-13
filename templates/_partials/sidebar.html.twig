@@ -51,6 +51,12 @@
                     <span class="sidebar__label">Events</span>
                 </a>
 
+                <a class="sidebar__item {{ current_route starts with 'admin_tariff' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_tariffs') }}">
+                    {{ icon('pricing') }}
+                    <span class="sidebar__label">Tariffs</span>
+                </a>
+
                 <a class="sidebar__item {{ current_route starts with 'admin_user' ? 'sidebar__item--active' }}"
                    href="{{ path('admin_users') }}">
                     {{ icon('users') }}
@@ -75,7 +81,7 @@
         </div>
     </nav>
 
-    <div class="sidebar__footer">
+    {# <div class="sidebar__footer">
         {% if app.user %}
             <div class="sidebar__user">
                 <span class="avatar">{{ initials(app.user.firstName, app.user.lastName) }}</span>
@@ -85,7 +91,7 @@
                 </span>
             </div>
         {% endif %}
-    </div>
+    </div> #}
 </aside>
 
 <div class="sidebar__scrim" data-sidebar-target="scrim" data-action="click->sidebar#close"></div>

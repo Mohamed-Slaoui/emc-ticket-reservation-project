@@ -103,9 +103,9 @@ class FixturesTest extends FunctionalTestCase
 
         self::assertCount(4, $tariffs);
         $codes = array_map(static fn ($t) => $t->getCode(), $tariffs);
-        self::assertSame(['GROUPE', 'INVITATION', 'PLEIN', 'REDUIT'], $codes);
+        self::assertSame(['FULL', 'GROUP', 'INVITATION', 'REDUCED'], $codes);
 
-        $reduced = $em->getRepository(\App\Entity\Tariff::class)->findOneBy(['code' => 'REDUIT']);
+        $reduced = $em->getRepository(\App\Entity\Tariff::class)->findOneBy(['code' => 'REDUCED']);
         self::assertTrue($reduced->requiresEligibilityProof(), 'Reduced tariff requires a supporting document (Q5).');
     }
 }

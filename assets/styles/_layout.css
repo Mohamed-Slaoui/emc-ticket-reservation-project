@@ -18,7 +18,7 @@
     /* The shell fills exactly one viewport: its own margins and its padding
        are removed from the height, so a short page never scrolls. */
     min-height: calc(100vh - var(--space-8) - (2 * var(--space-5)));
-    padding: var(--space-4);
+    /* padding: var(--space-4); */
     background: var(--surface);
     box-shadow: var(--shadow-lg);
 }
@@ -27,6 +27,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    padding: 0 var(--space-5) 0 0;
     /* padding: 0 var(--space-5);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg); */

@@ -31,7 +31,7 @@ class DatabaseInvariantsTest extends IntegrationTestCase
 
         $performance = $this->createPerformance();
         $zone = $em->getRepository(\App\Entity\LayoutZone::class)->findOneBy(['code' => 'ORC']);
-        $tariff = $em->getRepository(Tariff::class)->findOneBy(['code' => 'PLEIN']);
+        $tariff = $em->getRepository(Tariff::class)->findOneBy(['code' => 'FULL']);
 
         $first = new PerformancePrice($performance, $zone, $tariff, '150.00');
         $em->persist($first);
@@ -52,7 +52,7 @@ class DatabaseInvariantsTest extends IntegrationTestCase
 
         $performance = $this->createPerformance();
         $zone = $em->getRepository(\App\Entity\LayoutZone::class)->findOneBy(['code' => 'ORC']);
-        $tariff = $em->getRepository(Tariff::class)->findOneBy(['code' => 'PLEIN']);
+        $tariff = $em->getRepository(Tariff::class)->findOneBy(['code' => 'FULL']);
 
         $current = new PerformancePrice($performance, $zone, $tariff, '150.00');
         $em->persist($current);
@@ -74,7 +74,7 @@ class DatabaseInvariantsTest extends IntegrationTestCase
 
         $performance = $this->createPerformance();
         $zone = $em->getRepository(\App\Entity\LayoutZone::class)->findOneBy(['code' => 'ORC']);
-        $tariff = $em->getRepository(Tariff::class)->findOneBy(['code' => 'PLEIN']);
+        $tariff = $em->getRepository(Tariff::class)->findOneBy(['code' => 'FULL']);
 
         $first = new PerformancePrice($performance, $zone, $tariff, '150.00');
         $em->persist($first);

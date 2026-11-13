@@ -10,6 +10,7 @@ use App\Exception\EventCannotBeDeletedException;
 use App\Repository\EventRepository;
 use App\Repository\PerformancePlaceRepository;
 use App\Repository\PerformanceRepository;
+use App\Service\Pricing\PerformancePriceService;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -28,6 +29,7 @@ class EventService
         private readonly EventRepository $events,
         private readonly PerformanceRepository $performances,
         private readonly PerformancePlaceRepository $performancePlaces,
+        private readonly PerformancePriceService $performancePrices,
     ) {
     }
 
@@ -158,12 +160,19 @@ class EventService
                 : 'the seats of the configuration are on sale',
         ];
 
-        // The prices are set in the pricing phase: until then the event
-        // cannot be published.
+        // The prices are set per zone and per tariff, for every performance.
+        $missingPrices = 0;
+
+        foreach ($performances as $performance) {
+            $missingPrices += $this->performancePrices->missingPriceCount($performance);
+        }
+
         $checks[] = [
             'label' => 'The prices are set',
-            'ok' => false,
-            'detail' => 'the prices of the tariffs are not set yet',
+            'ok' => [] !== $performances && 0 === $missingPrices,
+            'detail' => 0 === $missingPrices && [] !== $performances
+                ? 'the prices are set for every zone and every tariff'
+                : sprintf('%d price(s) missing', $missingPrices),
         ];
 
         return $checks;

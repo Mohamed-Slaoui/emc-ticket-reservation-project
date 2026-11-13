@@ -13,6 +13,7 @@ use App\Entity\Tariff;
 use App\Entity\Venue;
 use App\Enum\EventType;
 use App\Enum\PlaceType;
+use App\Enum\TariffCode;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -96,10 +97,12 @@ class AppFixtures extends Fixture
         }
 
         // Pricing categories (docs/DECISIONS.md Q5).
-        $manager->persist(new Tariff('PLEIN', 'Plein tarif'));
-        $manager->persist(new Tariff('REDUIT', 'Tarif réduit', true)); // supporting document verified in person
-        $manager->persist(new Tariff('GROUPE', 'Tarif groupe')); // BR-12: minimum 5 seats, enforced by services
-        $manager->persist(new Tariff('INVITATION', 'Invitation'));
+        // The four approved pricing categories (docs/DECISIONS.md Q5). The
+        // catalogue is fixed — the name is computed by the database from the code.
+        $manager->persist(new Tariff(TariffCode::Full));
+        $manager->persist(new Tariff(TariffCode::Reduced)); // supporting document verified in person
+        $manager->persist(new Tariff(TariffCode::Group)); // BR-12: minimum 5 seats, enforced by services
+        $manager->persist(new Tariff(TariffCode::Invitation));
 
         // A programme, still a draft: the administrator schedules its
         // performances (§4.1, steps 5 and 6). The demo configuration is

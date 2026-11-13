@@ -53,7 +53,7 @@ class TicketAndPaymentTest extends TestCase
         $this->confirmedItem = new ReservationItem(
             $this->reservation,
             $seat,
-            new PerformancePrice($performance, $zone, new Tariff('PLEIN', 'Plein tarif'), '150.00'),
+            new PerformancePrice($performance, $zone, new Tariff(\App\Enum\TariffCode::Full), '150.00'),
         );
         $this->confirmedItem->setStatus(ReservationItemStatus::Confirmed);
     }

@@ -46,7 +46,7 @@ class ReservationTest extends TestCase
             new \DateTimeImmutable('+7 days'),
         );
         $this->performancePlace = new PerformancePlace($this->performance, $layoutPlace);
-        $tariff = new Tariff('PLEIN', 'Plein tarif');
+        $tariff = new Tariff(\App\Enum\TariffCode::Full);
         $this->price = new PerformancePrice($this->performance, $zone, $tariff, '150.00');
         $this->author = new User('author@demo.test', 'hash', 'A', 'B');
     }
@@ -74,7 +74,7 @@ class ReservationTest extends TestCase
         $reservation = $this->reservation(new \DateTimeImmutable('+10 minutes'));
         $item = new \App\Entity\ReservationItem($reservation, $this->performancePlace, $this->price);
 
-        self::assertSame('Plein tarif', $item->getTariffNameSnapshot());
+        self::assertSame('Full tariff', $item->getTariffNameSnapshot());
         self::assertSame('150.00', $item->getUnitPriceSnapshot());
         self::assertSame('150.00', $item->getLineTotalSnapshot());
         self::assertSame(ReservationItemStatus::Held, $item->getStatus());

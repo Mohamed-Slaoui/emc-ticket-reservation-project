@@ -13,6 +13,7 @@ use App\Exception\PerformanceCannotBeDeletedException;
 use App\Exception\PerformanceRoomUnavailableException;
 use App\Repository\LayoutPlaceRepository;
 use App\Repository\PerformancePlaceRepository;
+use App\Repository\PerformancePriceRepository;
 use App\Repository\PerformanceRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,6 +38,7 @@ class PerformanceService
         private readonly EntityManagerInterface $entityManager,
         private readonly PerformanceRepository $performances,
         private readonly PerformancePlaceRepository $performancePlaces,
+        private readonly PerformancePriceRepository $performancePrices,
         private readonly LayoutPlaceRepository $layoutPlaces,
     ) {
     }
@@ -135,6 +137,12 @@ class PerformanceService
         // The inventory goes with it.
         foreach ($this->performancePlaces->findForPerformance($performance) as $performancePlace) {
             $this->entityManager->remove($performancePlace);
+        }
+
+        // The prices go with it — the history is archived, but the prices of
+        // a show that never took place carry no meaning.
+        foreach ($this->performancePrices->findHistoryForPerformance($performance) as $price) {
+            $this->entityManager->remove($price);
         }
 
         $this->entityManager->remove($performance);
