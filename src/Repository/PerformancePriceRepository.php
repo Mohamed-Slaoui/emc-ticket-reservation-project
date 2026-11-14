@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Performance;
 use App\Entity\PerformancePrice;
+use App\Entity\Tariff;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -40,6 +41,40 @@ class PerformancePriceRepository extends ServiceEntityRepository
         }
 
         return $matrix;
+    }
+
+    /**
+     * The lowest current price across zones, per performance, for the given
+     * tariff — shown as "from X MAD" on the programme.
+     *
+     * @param list<int> $performanceIds
+     * @return array<int, string> the performance id → its lowest amount
+     */
+    public function findFromAmounts(array $performanceIds, Tariff $tariff): array
+    {
+        if ([] === $performanceIds) {
+            return [];
+        }
+
+        /** @var list<array{pid: int|string, amount: string}> $rows */
+        $rows = $this->createQueryBuilder('pp')
+            ->select('IDENTITY(pp.performance) AS pid, MIN(pp.amount) AS amount')
+            ->andWhere('pp.performance IN (:performanceIds)')
+            ->setParameter('performanceIds', $performanceIds)
+            ->andWhere('pp.tariff = :tariff')
+            ->setParameter('tariff', $tariff)
+            ->andWhere('pp.isCurrent = true')
+            ->groupBy('pp.performance')
+            ->getQuery()
+            ->getArrayResult();
+
+        $from = [];
+
+        foreach ($rows as $row) {
+            $from[(int) $row['pid']] = $row['amount'];
+        }
+
+        return $from;
     }
 
     /**

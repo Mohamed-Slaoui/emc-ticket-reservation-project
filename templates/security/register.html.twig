@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}Sign up{% endblock %}
+
+{% block shell %}
+    <div class="auth">
+        <div class="auth__card">
+            <div class="auth__brand">
+                <span class="sidebar__mark">{{ icon('venue', 'icon icon--lg') }}</span>
+                <span class="sidebar__wordmark">EMC Ticketing</span>
+            </div>
+
+            <h1 style="font-size: var(--text-2xl); margin-bottom: var(--space-2);">Sign up</h1>
+            <p class="u-muted u-small" style="margin-bottom: var(--space-6);">
+                Create your account and proceed straight to the checkout.
+            </p>
+
+            {% include '_components/flash.html.twig' %}
+
+            {{ form_start(form, {attr: {class: 'form', 'data-turbo': 'false'}}) }}
+                {{ form_row(form.email) }}
+                <div class="form__grid">
+                    {{ form_row(form.firstName) }}
+                    {{ form_row(form.lastName) }}
+                </div>
+                {{ form_row(form.password) }}
+                {{ form_row(form.passwordConfirm) }}
+
+                <button type="submit" class="button button--primary button--block button--lg">Create my account</button>
+            {{ form_end(form) }}
+
+            <p class="u-muted u-small" style="margin-top: var(--space-6);">
+                Already have an account? <a href="{{ path('app_login') }}">Sign in</a>.
+            </p>
+        </div>
+    </div>
+{% endblock %}

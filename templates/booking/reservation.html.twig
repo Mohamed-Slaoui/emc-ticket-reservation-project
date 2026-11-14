@@ -1,0 +1,105 @@
+{% extends 'base_public.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}Reservation {{ reservation.reference }}{% endblock %}
+
+{% block content %}
+    {% set status = reservation.status.value %}
+
+    {% include '_components/page_header.html.twig' with {
+        title: 'Reservation ' ~ reservation.reference,
+        subtitle: reservation.performance.event.title ~ ' · ' ~ reservation.performance.startsAt|date('d/m/Y H:i') ~ ' · ' ~ reservation.performance.seatingLayout.room.venue.name,
+        action_label: 'My reservations',
+        action_path: path('booking_reservations'),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    {% include '_components/flash.html.twig' %}
+
+    <div class="card card--flat">
+        <div class="card__body">
+            <div class="booking__summary u-flex u-gap-3" style="margin-bottom: var(--space-5);">
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Status</div>
+                    <div class="table__identity-name">
+                        {% if status == 'HELD' %}
+                            <span class="badge badge--warning">Held until {{ reservation.expiresAt|date('H:i') }}</span>
+                        {% elseif status == 'CONFIRMED' %}
+                            <span class="badge badge--success">Confirmed</span>
+                        {% elseif status == 'EXPIRED' %}
+                            <span class="badge">Expired</span>
+                        {% else %}
+                            <span class="badge badge--danger">Cancelled</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Total</div>
+                    <div class="table__identity-name u-mono">{{ reservation.totalAmount }} {{ reservation.currency }}</div>
+                </div>
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Seats</div>
+                    <div class="table__identity-name">{{ reservation.items|length }}</div>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Zone</th>
+                            <th>Seat</th>
+                            <th>Tariff</th>
+                            <th>Price</th>
+                            {% if status == 'CONFIRMED' %}<th>Ticket</th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in reservation.items %}
+                            {% set ticket = tickets[item.id]|default(null) %}
+                            <tr>
+                                <td>{{ item.performancePlace.layoutPlace.layoutZone.name }}</td>
+                                <td class="u-mono">{{ item.performancePlace.layoutPlace.place.code }}</td>
+                                <td>{{ item.tariffNameSnapshot }}</td>
+                                <td class="u-mono">{{ item.unitPriceSnapshot }} {{ item.currencySnapshot }}</td>
+                                {% if status == 'CONFIRMED' %}
+                                    <td>
+                                        {% if ticket %}
+                                            <div class="table__identity-text">
+                                                <div class="table__identity-name u-mono">{{ ticket.ticketNumber }}</div>
+                                                <div class="table__identity-mail u-mono u-small" title="The claim code presented at the entrance">{{ ticket.qrToken }}</div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if status == 'HELD' %}
+                <div class="form__actions booking__summary" style="margin-top: var(--space-5); justify-content: flex-end;">
+                    <form method="post" action="{{ path('booking_cancel', {id: reservation.id}) }}"
+                          data-turbo-confirm="Cancel this hold and put the seats back on sale?">
+                        <input type="hidden" name="_token" value="{{ csrf_token('cancel_reservation_' ~ reservation.id) }}">
+                        <button type="submit" class="button button--ghost">
+                            {{ icon('close', 'icon icon--sm') }}
+                            Cancel this hold
+                        </button>
+                    </form>
+
+                    <form method="post" action="{{ path('booking_pay', {id: reservation.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('pay_' ~ reservation.id) }}">
+                        <button type="submit" class="button button--primary" title="Simulated payment — the reservation is confirmed and the tickets are issued">
+                            {{ icon('ticket', 'icon icon--sm') }}
+                            Pay {{ reservation.totalAmount }} {{ reservation.currency }}
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

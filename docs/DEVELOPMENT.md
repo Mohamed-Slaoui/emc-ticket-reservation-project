@@ -4,8 +4,8 @@
 |---|---|
 | **Project** | Performance Venue Ticketing — PFE Challenge EMC 2026 |
 | **Subject** | Subject 1 of 4 — Billetterie d'une salle de spectacle |
-| **Phase** | 0 — Project inspection and technical foundation |
-| **Last updated** | 2026-11-10 |
+| **Phase** | 8 — Customer booking experience |
+| **Last updated** | 2026-11-14 |
 | **Related documents** | [`docs/MODELE.md`](MODELE.md) · [`docs/DECISIONS.md`](DECISIONS.md) · [`docs/WORKFLOWS.md`](WORKFLOWS.md) · [`README.md`](../README.md) |
 
 ---
@@ -352,7 +352,32 @@ WF-1, Phase 7 (docs/WORKFLOWS.md). Both the customer channel (Phase 8) and the b
 | An unpaid hold is cancelled by its author (or the customer of that reservation); the seats are released, the items `CANCELLED` (BR-09). | `ReservationService::cancelHeldReservation()` |
 | A confirmed reservation is cancelled by an administrator through the refund flow, never here. | Phase 10/12 |
 
-### 4.9 The cascading deletions
+### 4.9 The public shop, separated from the administration
+
+The public shop lives at `/` and is the home of the project for everyone. The
+administration (`/admin/*`) is the management interface only — it is no longer
+the entry point to the shop. Signing in lands everyone on the programme; an
+administrator reaches the dashboard with one click ("Administration", shown in
+the public bar to ROLE_ADMIN only).
+
+One rule: **the shop sells the full tariff online** — reduced, group and
+invitation tariffs are sold at the counter (Q5). An administrator keeps the
+shop permissions: full, group and invitation (reduced stays at the counter,
+against a supporting document).
+
+| Rule | Where |
+|---|---|
+| Public browsing: the programme, the event page and the seat map need no account; browsing works anonymously. | `BookingController::index() / event() / show()` |
+| Holding seats and paying requires an account — sign up in the shop (`/register`) or an administration-created account. | `security.yaml` — `^/reservations` → `ROLE_USER` |
+| Published events only: a draft answers **404**. | `BookingController::assertPublished()` |
+| The seat map renders every inventory row with its state and a zone-coded swatch; the `booking` Stimulus controller counts seats and the running total. | `BookingController::seatMap()` + `assets/controllers/booking_controller.js` |
+| The hold goes through the shared engine — full tariff online by default; an administrator may apply group / invitation. | `BookingController::hold()` → `ReservationService::hold()` |
+| Paying confirms in one transaction — reservation CONFIRMED, seats SOLD, a captured `Payment` (method ONLINE), one `Ticket` per item (INV-06). | `PaymentService::complete()` + `ReservationService::confirm()` |
+| Online payment is **simulated** (no provider is imposed — docs/DECISIONS.md A1). | `PaymentService` |
+| A customer may see, pay or cancel only **their** reservations; anyone else gets **403**. | `BookingController::assertOwned()` |
+| The administration manages reservations read-only at `/admin/reservations` — list and detail, never an editor. | `Admin\ReservationController` |
+
+### 4.10 The cascading deletions
 
 The foreign keys are strict, so a deletion removes **what it holds**, in this order:
 
@@ -374,7 +399,7 @@ The seat map is a **plain form**, not a Symfony form: it holds one checkbox per 
 room — four hundred of them — and the browser sends the checked seats. The zone colours
 come from the token file and follow the position of the zone in the configuration.
 
-### 4.10 Documentation
+### 4.11 Documentation
 
 - `README.md` is a **living document**: it is updated in the same phase as any feature,
   dependency, command, integration or setup requirement it introduces.
@@ -399,11 +424,11 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 4 | Seating layout and zone management | **Completed** |
 | 5 | Events and performances | **Completed** |
 | 6 | Tariffs and performance pricing | **Completed** |
-| 7 | Inventory availability and reservation foundation | **Review required** |
-| 8 | Customer booking experience | Pending |
+| 7 | Inventory availability and reservation foundation | **Completed** |
+| 8 | Customer booking experience | **Review required** |
 | 9 | Box-office sales | Pending |
-| 10 | Online payment integration | Pending |
-| 11 | Ticket issuance and entry validation | Pending |
+| 10 | Online payment integration | Pending — a **simulated** payment was delivered in Phase 8 (docs/DECISIONS.md A1); a real provider would plug in here |
+| 11 | Ticket issuance and entry validation | Pending — **tickets are issued at payment** (one per item); the QR image and the entry scanner remain |
 | 12 | Administrator reservation and performance management | Pending |
 | 13 | Reporting and dashboards | Pending |
 | 14 | Google Sheets integration | Pending |
@@ -460,7 +485,7 @@ composer validate
 > failures. The commands become meaningful as soon as Phase 1 lands.
 >
 > **Since Phase 1**, all the commands above are effective: the schema is created by the
-> migration, the fixtures populate the demo data, and the suite runs 81 tests.
+> migration, the fixtures populate the demo data, and the suite runs 228 tests.
 
 ---
 

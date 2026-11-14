@@ -20,5 +20,6 @@
 @import './_components/_sidebar.css';
 @import './_components/_topbar.css';
 
+@import './_components/_public.css';
 @import './_utilities.css';
 @import './_print.css';

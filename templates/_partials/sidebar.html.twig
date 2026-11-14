@@ -5,7 +5,7 @@
 {% set current_route = app.request.attributes.get('_route') %}
 
 <aside class="sidebar" id="sidebar" data-sidebar-target="sidebar">
-    <a class="sidebar__brand" href="{{ path('app_home') }}">
+    <a class="sidebar__brand" href="{{ path('booking_index') }}">
         <span class="sidebar__mark">{{ icon('venue', 'icon icon--lg') }}</span>
         <span class="sidebar__wordmark">Ticketing</span>
     </a>
@@ -51,6 +51,12 @@
                     <span class="sidebar__label">Events</span>
                 </a>
 
+                <a class="sidebar__item {{ current_route starts with 'admin_reservation' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_reservations') }}">
+                    {{ icon('ticket') }}
+                    <span class="sidebar__label">Reservations</span>
+                </a>
+
                 <a class="sidebar__item {{ current_route starts with 'admin_tariff' ? 'sidebar__item--active' }}"
                    href="{{ path('admin_tariffs') }}">
                     {{ icon('pricing') }}
@@ -63,6 +69,12 @@
                     <span class="sidebar__label">Users</span>
                 </a>
             {% endif %}
+
+            {# <a class="sidebar__item {{ current_route starts with 'booking' ? 'sidebar__item--active' }}"
+               href="{{ path('booking_index') }}">
+                {{ icon('ticket') }}
+                <span class="sidebar__label">Book tickets</span>
+            </a> #}
         </div>
 
         <div class="sidebar__group">

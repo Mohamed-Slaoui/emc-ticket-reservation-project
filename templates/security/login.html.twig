@@ -8,13 +8,13 @@
     <div class="auth">
         <div class="auth__card">
             <div class="auth__brand">
-                <span class="sidebar__mark">{{ icon('venue', 'icon icon--lg') }}</span>
-                <span class="sidebar__wordmark">Ticketing</span>
+                <span class="sidebar__mark">{{ icon('ticket', 'icon icon--lg') }}</span>
+                <span class="sidebar__wordmark">EMC Ticketing</span>
             </div>
 
             <h1 style="font-size: var(--text-2xl); margin-bottom: var(--space-2);">Sign in</h1>
             <p class="u-muted u-small" style="margin-bottom: var(--space-6);">
-                Use the account your administrator gave you.
+                Sign in to your account to hold seats and buy tickets.
             </p>
 
             {% if error %}
@@ -25,6 +25,8 @@
                 } %}
                 <div style="height: var(--space-4);"></div>
             {% endif %}
+
+            {% include '_components/flash.html.twig' %}
 
             {# The sign in is a plain navigation: the authentication must not
                depend on the JavaScript layer to deliver its answer. #}
@@ -56,7 +58,7 @@
             </form>
 
             <p class="u-muted u-small" style="margin-top: var(--space-6);">
-                Accounts are created by the venue administrator.
+                No account yet? <a href="{{ path('app_register') }}">Sign up</a>.
             </p>
         </div>
     </div>

@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Performance;
 use App\Entity\PerformancePlace;
+use App\Enum\InventoryStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\Persistence\ManagerRegistry;
@@ -74,6 +75,21 @@ class PerformancePlaceRepository extends ServiceEntityRepository
             ->select('COUNT(pp.id)')
             ->andWhere('pp.performance = :performance')
             ->setParameter('performance', $performance)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * The number of inventory rows of a performance in a given state.
+     */
+    public function countByStatus(Performance $performance, InventoryStatus $status): int
+    {
+        return (int) $this->createQueryBuilder('pp')
+            ->select('COUNT(pp.id)')
+            ->andWhere('pp.performance = :performance')
+            ->setParameter('performance', $performance)
+            ->andWhere('pp.status = :status')
+            ->setParameter('status', $status)
             ->getQuery()
             ->getSingleScalarResult();
     }

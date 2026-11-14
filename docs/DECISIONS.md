@@ -5,7 +5,7 @@
 | **Project** | Performance Venue Ticketing - PFE Challenge EMC |
 | **Subject** | Subject 1 of 4 |
 | **Period** | 2026-11-08 → 2026-11-15 (deadline: 2026-11-15 at 23:59, Morocco time) |
-| **Last updated** | **2026-11-09** |
+| **Last updated** | **2026-11-14** |
 | **Data model** | [`docs/MODELE.md`](MODELE.md) |
 
 > This document records, in **dated** form, the assumptions, trade-offs, and technical choices made for the project. It explicitly answers the **"Questions to settle"** from the specification (section 2) and records decisions that the subject did not impose.
@@ -148,6 +148,45 @@ The five questions from the specification, with the chosen answer and its justif
 - **Impact:** the layout selector and the performances table now show the room, and the
   refusal names the room, the conflicting show and its interval. The conflict check lives
   in `PerformanceService` — the single authority, used by the creation and the update.
+
+### 2026-11-14 - The shop is open to everyone, and the product is EMC Ticketing
+
+- **Decision:** the public ticket office allows **self sign-up** (`/register`, a "Sign up"
+  button next to "Sign in"). The account created is always a **customer** account — box-office
+  and administrator accounts remain administration-only. The browse is public; holding seats
+  and paying require an account, and guests now get one immediately. The earlier decision
+  "accounts are created by the administration" is superseded for customers only.
+- **Decision:** the public site is branded **EMC Ticketing** — "Book tickets for events" —
+  not limited to a single venue. A visitor signs in, picks an event and buys the seats, on
+  the same website. The school-project purpose is a general event-ticketing site; the venue
+  remains the venue it sells tickets for.
+- **Impact:** `LoginTest` was updated for the public landing page (`/` for everyone); the
+  sign-up form issues a customer account and signs nothing up until it is valid; a guest that
+  is already signed in is redirected to the shop.
+
+### 2026-11-13 - The public shop, separated from the administration
+
+- **Decision:** the public shop lives at `/` — it is the home of the project, for everyone.
+  The programme, the event page and the seat map are public; holding seats and paying
+  require an account (the existing customer accounts, and the self sign-up since
+  2026-11-14 — see the entry above). The administration dashboard (`/admin/*`) is the
+  management interface only; it is no longer the entry point to the shop.
+- **Decision:** customers and administrators share the same shop screens and the same
+  reservation engine (INV-10). An administrator goes to the administration with one
+  click ("Administration" in the public bar, visible to ROLE_ADMIN only), and keeps
+  the shop permissions: full, group and invitation tariffs (the reduced tariff is
+  sold at the counter, against a supporting document — Q5). The reduced tariff is
+  deliberately **not** offered in the shop, even to an administrator: a document
+  cannot be checked online.
+- **Decision:** online payment is **simulated** (assumption A1 — no online provider
+  is imposed). Paying confirms the reservation in one transaction: `Reservation::confirm()`,
+  seats SOLD, a captured `Payment` (method ONLINE), one `Ticket` per item (INV-06).
+- **Known compromise:** the scanable QR image needs `endroid/qr-code`, which cannot be
+  installed in this environment (no Packagist network access). The confirmation page
+  shows each ticket with its number and its `qr_token` claim code (monospace); the
+  scanner for entry redemption (Phase 11) verifies that token. When the machine can
+  reach Packagist, `composer require endroid/qr-code` and one Twig macro restore the
+  scannable image.
 
 ### 2026-11-13 - The tariff catalogue is fixed
 
@@ -300,4 +339,6 @@ These points are **excluded** from the first version to guarantee a solid delive
 | MySQL 8 as the only database target; `.env` committed | 2026-11-10 | Section 1 — Phase 0 entry |
 | Phase roadmap, conventions and known issues | 2026-11-10 | [`DEVELOPMENT.md`](DEVELOPMENT.md) |
 | The tariff catalogue is fixed (4 categories, enforced by the database) | 2026-11-13 | Section 1 — the 2026-11-13 entry, and Q5 |
+| The public site at / is separated from the administration; simulated online payment; one shared shop | 2026-11-13 | Section 1 — the 2026-11-13 entry (two entries, same day) |
+| Self sign-up of the ticket office; the site is branded EMC Ticketing | 2026-11-14 | Section 1 — the 2026-11-14 entry |
 | Approved business workflows | 2026-11-10 | [`WORKFLOWS.md`](WORKFLOWS.md) |

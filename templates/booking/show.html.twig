@@ -1,0 +1,133 @@
+{% extends 'base_public.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}{{ performance.event.title }}{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: performance.event.title,
+        subtitle: performance.startsAt|date('d/m/Y H:i') ~ ' · ' ~ performance.seatingLayout.room.venue.name ~ ' — ' ~ performance.seatingLayout.room.name,
+        action_label: 'Back to the programme',
+        action_path: path('booking_index'),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+    {% if availableCount == 0 %}
+        <div class="alert alert--warning" style="margin-bottom: var(--space-4);">
+        <span class="alert__icon">
+            {{ icon('alert', 'icon icon--sm') }}
+        </span>
+        <div class="alert__body"><strong>Sold out.</strong> No seat is on sale for this show.</div>
+    </div>
+    {% endif %}
+
+    {% if not is_granted('IS_AUTHENTICATED_FULLY') %}
+        <div class="alert alert--info" role="alert">
+            <span class="alert__icon">{{ icon('user', 'icon icon--sm') }}</span>
+            <div class="alert__body"><strong>An account is needed to book a seat.</strong> <a style="text-decoration: underline;" href="{{ path('app_register') }}">Sign up</a> or <a href="{{ path('app_login') }}">sign in</a> to hold and pay for seats.</div>
+        </div>
+    {% endif %}
+
+    {% include '_components/flash.html.twig' %}
+
+    <div class="card card--flat">
+        <div class="card__body booking__summary">
+            <div class="table__identity-text">
+                <div class="table__identity-mail">Date</div>
+                <div class="table__identity-name">{{ performance.startsAt|date('l j F Y — H:i') }}</div>
+            </div>
+            <div class="table__identity-text">
+                <div class="table__identity-mail">Price</div>
+                <div class="table__identity-name u-mono">{% if fromAmount %}From {{ fromAmount }} MAD{% else %}—{% endif %}</div>
+            </div>
+            <div class="table__identity-text">
+                <div class="table__identity-mail">Seats left</div>
+                <div class="table__identity-name">{{ availableCount }} / {{ totalCount }}</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" action="{{ path('booking_hold', {performanceId: performance.id}) }}"
+          data-controller="booking" data-booking-locked="{{ is_granted('IS_AUTHENTICATED_FULLY') ? 'false' : 'true' }}"
+          data-turbo="false">
+        <input type="hidden" name="_token" value="{{ csrf_token('hold_' ~ performance.id) }}">
+
+        <div class="card card--flat" style="margin-top: var(--space-4);">
+            <div class="card__body">
+                <div class="booking__pick-head">
+                    <h2 class="table__identity-name" style="margin: 0;">Choose your seats</h2>
+
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <fieldset class="booking__tariffs">
+                            <legend class="u-visually-hidden">Tariff</legend>
+
+                            <label class="booking__tariff-option" title="Full tariff — sold online to everyone.">
+                                <input type="radio" name="tariff" value="FULL" checked>
+                                Full
+                            </label>
+                            <label class="booking__tariff-option" title="Group tariff — at least 5 seats in the same reservation, all at the group rate.">
+                                <input type="radio" name="tariff" value="GROUP">
+                                Group
+                            </label>
+                            <label class="booking__tariff-option" title="Invitation — by authorization, reserved to the administration.">
+                                <input type="radio" name="tariff" value="INVITATION">
+                                Invitation
+                            </label>
+                        </fieldset>
+                    {% endif %}
+                </div>
+
+                <div class="seatmap__legend">
+                    {% for zoneId, zone in zones %}
+                        <span class="seatmap__legend-item">
+                            <span class="zone-list__swatch zone-list__swatch--{{ zoneColors[zoneId] }}"></span>
+                            {{ zone.name }}{% if zonePrices[zoneId] is defined and zonePrices[zoneId] %} — {{ zonePrices[zoneId] }} MAD{% endif %}
+                        </span>
+                    {% endfor %}
+                    <span class="seatmap__legend-item">
+                        <span class="zone-list__swatch" style="background: var(--text-muted); border-color: var(--text-muted);"></span>
+                        Sold
+                    </span>
+                    <span class="seatmap__legend-item">
+                        <span class="zone-list__swatch" style="background: var(--surface-muted); border-color: var(--border);"></span>
+                        Held
+                    </span>
+                </div>
+
+                <div class="seatmap">
+                    {% for rowLabel, seats in rows %}
+                        <div class="seatmap__row">
+                            <span class="seatmap__row-label">{{ rowLabel|default('—') }}</span>
+                            <div class="seatmap__seats">
+                                {% for seat in seats %}
+                                    {% set state = seat.status.value %}
+                                    {% set seatClass = state == 'AVAILABLE' ? 'seat--zone-' ~ zoneColors[seat.zoneId]
+                                        : (state == 'HELD' ? 'seat--held' : (state == 'SOLD' ? 'seat--sold' : 'seat--blocked')) %}
+                                    <label class="seat {{ seatClass }}"
+                                           title="{{ seat.code }} — {{ zones[seat.zoneId].name }}{{ state != 'AVAILABLE' ? ' — unavailable' : '' }}">
+                                        <input type="checkbox" name="places[]" value="{{ seat.inventoryPlace.id }}"
+                                               class="seat__input" data-price="{{ seat.price }}"
+                                               data-action="change->booking#update"
+                                               {% if state != 'AVAILABLE' %}disabled{% endif %}
+                                               aria-label="Seat {{ seat.code }}">
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="form__actions booking__summary" style="margin-top: var(--space-5);">
+                    <span class="booking__summary-count"><span data-booking-target="count">0</span> seat(s)</span>
+                    <span class="booking__summary-total" data-booking-target="total">0.00 MAD</span>
+                    <button type="submit" class="button button--primary" data-booking-target="submit" disabled
+                            title="{{ is_granted('IS_AUTHENTICATED_FULLY') ? 'The full tariff is the only tariff sold online. The seats are held for ' ~ holdMinutes ~ ' minutes.' : 'Sign up or sign in to hold seats.' }}">
+                        {{ icon('ticket', 'icon icon--sm') }}
+                        Hold my seats
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

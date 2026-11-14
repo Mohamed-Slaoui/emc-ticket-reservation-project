@@ -36,6 +36,53 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * The most recent reservations, the latest first — for the
+     * administration overview.
+     *
+     * @return list<Reservation>
+     */
+    public function findRecent(int $limit = 25): array
+    {
+        /** @var list<Reservation> $reservations */
+        $reservations = $this->createQueryBuilder('r')
+            ->leftJoin('r.performance', 'p')
+            ->addSelect('p')
+            ->leftJoin('p.event', 'e')
+            ->addSelect('e')
+            ->orderBy('r.createdAt', 'DESC')
+            ->setMaxResults(max(1, $limit))
+            ->getQuery()
+            ->getResult();
+
+        return $reservations;
+    }
+
+    /**
+     * The reservations an account appears on — as customer or as the author
+     * of the sale — the most recent first.
+     *
+     * @return list<Reservation>
+     */
+    public function findForUser(User $user): array
+    {
+        /** @var list<Reservation> $reservations */
+        $reservations = $this->createQueryBuilder('r')
+            ->leftJoin('r.performance', 'p')
+            ->addSelect('p')
+            ->leftJoin('p.event', 'e')
+            ->addSelect('e')
+            ->leftJoin('r.items', 'i')
+            ->addSelect('i')
+            ->andWhere('r.customer = :user OR r.createdBy = :user')
+            ->setParameter('user', $user)
+            ->orderBy('r.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $reservations;
+    }
+
+    /**
      * The hold reservations whose expiry time has passed and whose seats are
      * therefore due back in sale (BR-05).
      *

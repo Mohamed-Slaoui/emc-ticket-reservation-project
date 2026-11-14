@@ -42,7 +42,7 @@ class LoginTest extends FunctionalTestCase
 
         $this->followRedirects();
         self::assertResponseIsSuccessful();
-        self::assertSame('/admin', $this->client->getRequest()->getPathInfo());
+        self::assertSame('/', $this->client->getRequest()->getPathInfo());
     }
 
     public function test_a_box_office_employee_can_sign_in(): void
@@ -58,7 +58,7 @@ class LoginTest extends FunctionalTestCase
 
         $this->followRedirects();
         self::assertResponseIsSuccessful();
-        self::assertSame('/account', $this->client->getRequest()->getPathInfo());
+        self::assertSame('/', $this->client->getRequest()->getPathInfo());
     }
 
     public function test_a_customer_can_sign_in(): void
@@ -74,7 +74,7 @@ class LoginTest extends FunctionalTestCase
 
         $this->followRedirects();
         self::assertResponseIsSuccessful();
-        self::assertSame('/account', $this->client->getRequest()->getPathInfo());
+        self::assertSame('/', $this->client->getRequest()->getPathInfo());
     }
 
     public function test_a_wrong_password_is_rejected(): void
@@ -147,8 +147,8 @@ class LoginTest extends FunctionalTestCase
     /**
      * Follows the redirect chain until a page is reached.
      *
-     * Signing in lands on the home page, which then redirects to the
-     * administration or to the personal area, depending on the role.
+     * Signing in lands on the programme — the public shop is the home for everyone;
+     * an administrator goes to the administration with one click.
      */
     private function followRedirects(int $max = 3): void
     {

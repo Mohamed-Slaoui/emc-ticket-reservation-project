@@ -90,6 +90,9 @@
     padding-top: var(--space-4);
     border-top: 1px solid var(--border);
     margin-top: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
 }
 
 /* --------------------------------------------------------------------------
@@ -265,3 +268,53 @@
 .seat--zone-4 .seat__input { background: var(--zone-4); border-color: var(--zone-4); }
 .seat--zone-5 .seat__input { background: var(--zone-5); border-color: var(--zone-5); }
 .seat--zone-6 .seat__input { background: var(--zone-6); border-color: var(--zone-6); }
+
+/* --------------------------------------------------------------------------
+   The booking seat states — the customer channel.
+   -------------------------------------------------------------------------- */
+.seat--held .seat__input,
+.seat--sold .seat__input,
+.seat--blocked .seat__input {
+    cursor: not-allowed;
+    border-style: solid;
+}
+
+.seat--held .seat__input {
+    background: repeating-linear-gradient(
+        -45deg,
+        var(--surface-muted) 0 4px,
+        var(--border) 4px 8px
+    );
+    border-color: var(--border);
+}
+
+.seat--sold .seat__input {
+    background: var(--text-muted);
+    border-color: var(--text-muted);
+}
+
+.seat--blocked .seat__input {
+    background: rgba(196, 64, 55, 0.22);
+    border-color: rgba(196, 64, 55, 0.4);
+}
+
+.booking__summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    flex-wrap: wrap;
+}
+
+.booking__summary-count {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    font-variant-numeric: tabular-nums;
+}
+
+.booking__summary-total {
+    font-family: var(--font-mono);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+}

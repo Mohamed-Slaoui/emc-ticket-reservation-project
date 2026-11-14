@@ -7,6 +7,7 @@ use App\Entity\Event;
 use App\Entity\Performance;
 use App\Entity\Room;
 use App\Entity\SeatingLayout;
+use App\Enum\EventStatus;
 use App\Enum\PerformanceStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -27,6 +28,30 @@ class PerformanceRepository extends ServiceEntityRepository
      * A configuration used by a performance is **immutable**: any evolution
      * creates a new version, so the past sales are never altered.
      */
+    /**
+     * The performances on sale — the published events, the earliest first.
+     *
+     * @return list<Performance>
+     */
+    public function findOnSale(): array
+    {
+        /** @var list<Performance> $performances */
+        $performances = $this->createQueryBuilder('p')
+            ->leftJoin('p.event', 'e')
+            ->addSelect('e')
+            ->andWhere('e.status = :published')
+            ->setParameter('published', EventStatus::Published)
+            ->andWhere('p.startsAt >= :now')
+            ->setParameter('now', new \DateTimeImmutable())
+            ->andWhere('p.status <> :cancelled')
+            ->setParameter('cancelled', PerformanceStatus::Cancelled)
+            ->orderBy('p.startsAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $performances;
+    }
+
     public function countForLayout(SeatingLayout $layout): int
     {
         return (int) $this->createQueryBuilder('p')

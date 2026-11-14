@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>{% block title %}Book tickets{% endblock %} — EMC Ticketing</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%23167D7F%22/><path d=%22M9 21v-9l7-4 7 4v9%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%222%22 stroke-linejoin=%22round%22/><path d=%22M13 21v-5h6v5%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%222%22/></svg>">
+    {% block stylesheets %}
+        <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+    {% endblock %}
+</head>
+<body class="public">
+    {% from '_partials/icons.html.twig' import icon %}
+
+    <header class="public-bar">
+        <a class="public-bar__brand" href="{{ path('booking_index') }}">
+            {{ icon('ticket', 'icon icon--md') }}
+            <span>
+                EMC Ticketing
+                <span class="public-bar__tagline">Book tickets for events</span>
+            </span>
+        </a>
+
+        <nav class="public-bar__nav" aria-label="Main navigation">
+            <a href="{{ path('booking_index') }}">Programme</a>
+            {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                <a href="{{ path('booking_reservations') }}">My reservations</a>
+            {% endif %}
+        </nav>
+
+        <div class="public-bar__user">
+            {% if is_granted('ROLE_ADMIN') %}
+                <a class="button button--outline button--sm" href="{{ path('admin_dashboard') }}">
+                    {{ icon('dashboard', 'icon icon--sm') }}
+                    Administration
+                </a>
+            {% endif %}
+
+            {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                <span class="public-bar__name">{{ app.user.firstName }} {{ app.user.lastName }}</span>
+                <a class="public-bar__logout" href="{{ path('app_logout') }}" data-turbo="false">Logout</a>
+            {% else %}
+                <a class="button button--outline button--sm" href="{{ path('app_register') }}">Sign up</a>
+                <a class="button button--primary button--sm" href="{{ path('app_login') }}">Sign in</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="public-main" id="main-content">
+        {% include '_components/flash.html.twig' %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="public-footer">
+        <span>EMC Ticketing · Casablanca</span>
+        <span class="public-footer__spacer"></span>
+        <span>Book tickets for events online.</span>
+    </footer>
+
+    {% block javascripts %}
+        {{ importmap('app') }}
+    {% endblock %}
+</body>
+</html>

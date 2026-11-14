@@ -1,0 +1,78 @@
+{% extends 'base_public.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}On sale{% endblock %}
+
+{% block content %}
+    {% if performances is empty %}
+        <div class="alert alert--info">
+            <span class="alert__icon">{{ icon('info', 'icon icon--sm') }}</span>
+            <div>No show is on sale yet. The published programme appears here.</div>
+        </div>
+    {% else %}
+        <h1 class="public-heading">On sale</h1>
+
+        {% set body %}
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Event</th>
+                            <th>Venue</th>
+                            <th>From</th>
+                            <th>Seats left</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for performance in performances %}
+                            {% set left = available[performance.id] %}
+                            <tr>
+                                <td class="u-nowrap">
+                                    <div class="table__identity-text">
+                                        <div class="table__identity-name">{{ performance.startsAt|date('d/m/Y') }}</div>
+                                        <div class="table__identity-mail u-mono">{{ performance.startsAt|date('H:i') }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table__identity-text">
+                                        <div class="table__identity-name">
+                                            <a href="{{ path('booking_event', {id: performance.event.id}) }}">{{ performance.event.title }}</a>
+                                        </div>
+                                        <div class="table__identity-mail">{{ performance.seatingLayout.room.venue.name }}</div>
+                                    </div>
+                                </td>
+                                <td>{{ performance.seatingLayout.room.name }}</td>
+                                <td class="u-mono">
+                                    {% if fromAmounts[performance.id] is defined and fromAmounts[performance.id] %}
+                                        {{ fromAmounts[performance.id] }} MAD
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if left > 0 %}
+                                        {{ left }}
+                                    {% else %}
+                                        <span class="badge badge--danger">Sold out</span>
+                                    {% endif %}
+                                </td>
+                                <td class="table__cell--actions">
+                                    <a class="button button--primary button--sm"
+                                       href="{{ path('booking_show', {eventId: performance.event.id, performanceId: performance.id}) }}">
+                                        {{ icon('ticket', 'icon icon--sm') }}
+                                        {{ left > 0 ? 'Book' : 'Details' }}
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endset %}
+
+        {% include '_components/card.html.twig' with { variant: 'card--flat', body: body } %}
+    {% endif %}
+{% endblock %}

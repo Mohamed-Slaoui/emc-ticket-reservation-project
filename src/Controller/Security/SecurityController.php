@@ -41,21 +41,4 @@ class SecurityController extends AbstractController
     {
         throw new \LogicException('The firewall intercepts the logout request before this action is reached.');
     }
-
-    /**
-     * Where an authenticated user lands.
-     */
-    #[Route('/', name: 'app_home', methods: ['GET'])]
-    public function home(): Response
-    {
-        if (!$this->isGranted('ROLE_USER')) {
-            return $this->redirectToRoute('app_login');
-        }
-
-        if ($this->isGranted('ROLE_ADMIN')) {
-            return $this->redirectToRoute('admin_dashboard');
-        }
-
-        return $this->redirectToRoute('app_account');
-    }
 }

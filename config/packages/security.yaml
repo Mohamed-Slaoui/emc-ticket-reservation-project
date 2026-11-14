@@ -28,10 +28,9 @@ security:
                 login_path: app_login
                 check_path: app_login
                 enable_csrf: true
-                # The landing page depends on the role of the account: it sends
-                # an administrator to the administration and anybody else to
-                # their own account.
-                default_target_path: app_home
+                # Everyone lands on the public programme; the administration is
+                # one click away from there for an administrator.
+                default_target_path: /
             logout:
                 path: app_logout
                 target: app_login
@@ -43,7 +42,9 @@ security:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/box-office, roles: ROLE_BOX_OFFICE }
+        - { path: ^/reservations, roles: ROLE_USER }
         - { path: ^/account, roles: ROLE_USER }
+        - { path: ^/, roles: PUBLIC_ACCESS }
 
 when@test:
     security:

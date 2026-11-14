@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}Reservations{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: 'Reservations',
+        subtitle: 'The most recent reservations, all channels.',
+    } %}
+
+    {% set body %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Show</th>
+                        <th>Customer</th>
+                        <th>Seats</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Opened</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reservation in reservations %}
+                        {% set status = reservation.status.value %}
+                        <tr>
+                            <td class="u-mono u-nowrap">{{ reservation.reference }}</td>
+                            <td>
+                                <div class="table__identity-text">
+                                    <div class="table__identity-name">{{ reservation.performance.event.title }}</div>
+                                    <div class="table__identity-mail u-mono">{{ reservation.performance.startsAt|date('d/m/Y H:i') }}</div>
+                                </div>
+                            </td>
+                            <td>{{ reservation.customer ? reservation.customer.firstName ~ ' ' ~ reservation.customer.lastName : 'Anonymous sale' }}</td>
+                            <td>{{ reservation.items|length }}</td>
+                            <td class="u-mono">{{ reservation.totalAmount }} {{ reservation.currency }}</td>
+                            <td>
+                                {% if status == 'HELD' %}
+                                    <span class="badge badge--warning">Held</span>
+                                {% elseif status == 'CONFIRMED' %}
+                                    <span class="badge badge--success">Confirmed</span>
+                                {% elseif status == 'EXPIRED' %}
+                                    <span class="badge">Expired</span>
+                                {% else %}
+                                    <span class="badge badge--danger">Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td class="u-nowrap u-mono">{{ reservation.createdAt|date('d/m/Y H:i') }}</td>
+                            <td class="table__cell--actions">
+                                <a class="button button--ghost button--icon" href="{{ path('admin_reservation', {id: reservation.id}) }}"
+                                   title="View" aria-label="Open the reservation {{ reservation.reference }}">
+                                    {{ icon('eye', 'icon icon--sm') }}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endset %}
+
+    {% include '_components/card.html.twig' with { variant: 'card--flat', body: body } %}
+{% endblock %}

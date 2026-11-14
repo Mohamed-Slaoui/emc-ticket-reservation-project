@@ -106,8 +106,11 @@ Three rules are enforced server-side and are the basis of the whole authorisatio
 A box-office employee **cannot** cancel a confirmed reservation — that is an administrator
 action, and it always triggers a full refund.
 
-There is **no public registration**: the accounts are created by the venue
-administrator, from the administration screens.
+The public ticket office is open to everyone to **browse** the published
+programme. An account is needed to hold seats and to check out — and since
+2026-11-14 a guest can create a **customer** account from the shop itself
+(`/register`, "Sign up"). Box-office and administrator accounts are still
+created by the venue administrator, from the administration screens.
 
 Signing in is protected by a CSRF token, the passwords are hashed (bcrypt), and a
 disabled account cannot sign in — it is reported as an unknown address, so the visitor
@@ -363,7 +366,7 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 5 | Events and performances | **Completed** |
 | 6 | Tariffs and pricing | **Completed** |
 | 7 | Reservation foundation | **Review required** |
-| 8 | Customer booking | Pending |
+| 8 | Customer booking | **Review required** |
 | 9 | Box-office sales | Pending |
 | 10 | Online payments | Pending |
 | 11 | Tickets and entry | Pending |
@@ -409,11 +412,19 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
   snapshots, the group rule (BR-12), the online-channel authorization of the full tariff,
   expiry of unpaid holds (`app:holds:expire`), cancellation of an unpaid hold. One engine
   shared by both channels (INV-10).
+- **The public ticket office** — separated from the administration. `/` is the programme of
+  published shows (public: no account to browse); the event page lists the performances; the
+  seat map shows availability; pick seats → hold them → pay for them. The whole reservation
+  expires by itself if unpaid. The online payment is simulated (per `docs/DECISIONS.md`
+  A1) — and paying confirms the reservation, issues one ticket per seat and delivers the
+  tickets on the confirmation page. Administrators use the same shop (they keep full, group
+  and invitation tariffs); the reduced tariff is sold at the counter. The administration
+  also gets a read-only reservations screen (`/admin/reservations`).
 
 **What comes next**
 
-Phase 8 opens the customer booking screen: browse published performances, the seat map, the
-hold and payment flow.
+Phase 9 opens the box office: search a performance, the seat map for the seller, the tariff
+authorisations and the counter sale through the same reservation engine.
 
 ## 18. Known limitations and MVP boundaries
 
