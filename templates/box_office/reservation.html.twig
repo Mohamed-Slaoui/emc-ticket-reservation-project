@@ -61,55 +61,48 @@
                             <th>Seat</th>
                             <th>Tariff</th>
                             <th>Price</th>
+                            <th>Ticket</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in reservation.items %}
+                            {% set ticket = tickets[item.id]|default(null) %}
                             <tr>
                                 <td>{{ item.performancePlace.layoutPlace.layoutZone.name }}</td>
                                 <td class="u-mono">{{ item.performancePlace.layoutPlace.place.code }}</td>
                                 <td>{{ item.tariffNameSnapshot }}</td>
                                 <td class="u-mono">{{ item.unitPriceSnapshot }} {{ item.currencySnapshot }}</td>
+                                <td class="u-mono">
+                                    {% if ticket %}
+                                        <span title="Claim code: {{ ticket.qrToken }}">{{ ticket.ticketNumber }}</span>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if ticket %}
+                                        {{ ticket.status.value == 'VALID' ? 'Valid' : (ticket.status.value == 'USED' ? 'Used' : 'Void') }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
 
-            {% if tickets is not empty %}
-                <h2 class="table__identity-name" style="margin: var(--space-5) 0 var(--space-3);">Tickets</h2>
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Ticket</th>
-                                <th>Seat</th>
-                                <th>Status</th>
-                                <th>Claim code</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for ticket in tickets %}
-                                <tr>
-                                    <td class="u-mono">{{ ticket.ticketNumber }}</td>
-                                    <td class="u-mono">{{ ticket.reservationItem.performancePlace.layoutPlace.place.code }}</td>
-                                    <td>{{ ticket.status.value == 'VALID' ? 'Valid' : (ticket.status.value == 'USED' ? 'Used' : 'Void') }}</td>
-                                    <td><span class="u-mono u-small">{{ ticket.qrToken }}</span></td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            {% set ticketList = tickets is empty ? [] : tickets %}
+            {% if ticketList is not empty %}
+                {# <p class="u-muted u-small" style="margin-top: var(--space-4);">
+                    Claim codes (the QR payload): {% for ticket in ticketList %}<span class="u-mono">{{ ticket.qrToken }}</span>{% if not loop.last %} · {% endif %}{% endfor %}
+                </p> #}
             {% else %}
                 <p class="u-muted u-small" style="margin-top: var(--space-4);">No ticket yet — payment is pending or the reservation is not confirmed.</p>
             {% endif %}
 
             {% if status == 'CONFIRMED' %}
-                <div class="form__actions" style="margin-top: var(--space-5);">
-                    <button type="button" class="button button--ghost" onclick="window.print()">{{ icon('printer', 'icon icon--sm') }} Print the tickets</button>
-                </div>
-            {% endif %}
-            {% if tickets is not empty %}
                 <div class="form__actions" style="margin-top: var(--space-5);">
                     <a class="button button--primary" href="{{ path('booking_tickets', {id: reservation.id}) }}">
                         {{ icon('printer', 'icon icon--sm') }}

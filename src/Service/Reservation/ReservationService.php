@@ -128,8 +128,16 @@ class ReservationService
 
         // These authorizations are checked server-side, exactly as the
         // seller asked for them, and a compromised form cannot bypass them.
-        if (SalesChannel::Online === $channel && TariffCode::Full !== $tariffCode) {
-            throw new TariffNotAuthorizedException('Only the full tariff is sold online. Reduced, group and invitation tariffs are sold at the counter (Q5).');
+        if (SalesChannel::Online === $channel) {
+            if (TariffCode::Reduced === $tariffCode) {
+                throw new TariffNotAuthorizedException('The reduced tariff is sold at the counter, against a supporting document (Q5).');
+            }
+            // The shop sells the full tariff to everyone; an administrator
+            // booking through the shop also keeps the group and invitation
+            // tariffs (Q5). Everything else is counter-only.
+            if (TariffCode::Full !== $tariffCode && !$isAdministrator) {
+                throw new TariffNotAuthorizedException('Only the full tariff is sold online. Group and invitation tariffs are reserved to the administration (Q5).');
+            }
         }
 
         // The reduced tariff is reserved at the counter to the sellers the
@@ -362,11 +370,13 @@ class ReservationService
                 }
                 foreach ($reservation->getPayments() as $payment) {
                     if (PaymentStatus::Succeeded === $payment->getStatus()) {
-                        $this->entityManager->persist(new Refund(
+                        $refund = new Refund(
                             $payment,
                             $payment->getAmount(),
                             'Reservation cancelled by the administrator.',
-                        ));
+                        );
+                        $refund->markSucceeded();
+                        $this->entityManager->persist($refund);
                     }
                 }
                 foreach ($this->itemPlaces($reservation) as $place) {

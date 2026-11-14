@@ -94,6 +94,18 @@
 
                 {# The online payment — simulated (docs/DECISIONS.md A1). The
                    details are never stored: the provider only authorizes. #}
+                {% if reservation.totalAmount == '0.00' %}
+                    <form method="post" action="{{ path('booking_pay', {id: reservation.id}) }}" data-turbo="false">
+                        <input type="hidden" name="_token" value="{{ csrf_token('pay_' ~ reservation.id) }}">
+                        <div class="form__actions" style="margin-top: var(--space-5); justify-content: flex-end;">
+                            <button type="submit" class="button button--primary"
+                                    title="No payment is due — the reservation is confirmed immediately.">
+                                {{ icon('ticket', 'icon icon--sm') }}
+                                Confirm reservation
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
                 <form method="post" action="{{ path('booking_pay', {id: reservation.id}) }}" class="form" data-turbo="false">
                     <input type="hidden" name="_token" value="{{ csrf_token('pay_' ~ reservation.id) }}">
 
@@ -130,6 +142,7 @@
                         The payment is simulated: any card number is accepted, a number ending in 0000 is refused.
                     </p>
                 </form>
+                {% endif %}
             {% endif %}
             {% if tickets is not empty %}
                 <div class="form__actions" style="margin-top: var(--space-5);">

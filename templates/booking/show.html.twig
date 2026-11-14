@@ -49,9 +49,10 @@
     </div>
 
     <form method="post" action="{{ path('booking_hold', {performanceId: performance.id}) }}"
-          data-controller="booking" data-booking-locked="{{ is_granted('IS_AUTHENTICATED_FULLY') ? 'false' : 'true' }}"
+          data-controller="booking tariff-prices" data-booking-locked="{{ is_granted('IS_AUTHENTICATED_FULLY') ? 'false' : 'true' }}"
           data-turbo="false">
         <input type="hidden" name="_token" value="{{ csrf_token('hold_' ~ performance.id) }}">
+        <script type="application/json" id="zone-prices-by-tariff">{{ pricesByTariff|json_encode|raw }}</script>
 
         <div class="card card--flat" style="margin-top: var(--space-4);">
             <div class="card__body">
@@ -82,7 +83,7 @@
                     {% for zoneId, zone in zones %}
                         <span class="seatmap__legend-item">
                             <span class="zone-list__swatch zone-list__swatch--{{ zoneColors[zoneId] }}"></span>
-                            {{ zone.name }}{% if zonePrices[zoneId] is defined and zonePrices[zoneId] %} — {{ zonePrices[zoneId] }} MAD{% endif %}
+                            {{ zone.name }}{% if zonePrices[zoneId] is defined and zonePrices[zoneId] %} — <span data-zone-price="{{ zoneId }}">{{ zonePrices[zoneId] }} MAD</span>{% endif %}
                         </span>
                     {% endfor %}
                     <span class="seatmap__legend-item">
@@ -107,7 +108,7 @@
                                     <label class="seat {{ seatClass }}"
                                            title="{{ seat.code }} — {{ zones[seat.zoneId].name }}{{ state != 'AVAILABLE' ? ' — unavailable' : '' }}">
                                         <input type="checkbox" name="places[]" value="{{ seat.inventoryPlace.id }}"
-                                               class="seat__input" data-price="{{ seat.price }}"
+                                               class="seat__input" data-price="{{ seat.price }}" data-zone="{{ seat.zoneId }}"
                                                data-action="change->booking#update"
                                                {% if state != 'AVAILABLE' %}disabled{% endif %}
                                                aria-label="Seat {{ seat.code }}">

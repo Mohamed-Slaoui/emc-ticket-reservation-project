@@ -112,10 +112,11 @@ class BookingController extends AbstractController
         BookingPolicyRepository $policies,
         SeatMapViewBuilder $seatMapBuilder,
         PerformanceLabelService $labels,
+        TariffRepository $tariffs,
     ): Response {
         $this->assertPublished($performance, $event);
 
-        [$rows, $zoneColors, $zonePrices, $fromAmount, $availableCount, $totalCount, $zones] = $seatMapBuilder->build($performance, TariffCode::Full);
+        [$rows, $zoneColors, $zonePrices, $fromAmount, $availableCount, $totalCount, $zones, $pricesByTariff] = $seatMapBuilder->build($performance, TariffCode::Full);
 
         return $this->render('booking/show.html.twig', [
             'event' => $event,
@@ -125,10 +126,12 @@ class BookingController extends AbstractController
             'zones' => $zones,
             'zoneColors' => $zoneColors,
             'zonePrices' => $zonePrices,
+            'pricesByTariff' => $pricesByTariff,
             'fromAmount' => $fromAmount,
             'availableCount' => $availableCount,
             'totalCount' => $totalCount,
             'holdMinutes' => $policies->findOneBy([])?->getHoldDurationMinutes() ?? 10,
+            'tariffs' => $this->isGranted('ROLE_ADMIN') ? $tariffs->catalogue() : [],
         ]);
     }
 
@@ -264,6 +267,16 @@ class BookingController extends AbstractController
 
         if (ReservationStatus::Held !== $reservation->getStatus()) {
             $this->addFlash('warning', 'Only a held reservation can be paid.');
+
+            return $this->redirectToRoute('booking_reservation', ['id' => $reservation->getId()]);
+        }
+
+        // Free booking (invitation tariff) — no card needed: the reservation
+        // is confirmed directly, with a zero-amount captured payment.
+        if (bccomp($reservation->getTotalAmount(), '0.00', 2) === 0) {
+            $paymentService->complete($reservation);
+
+            $this->addFlash('success', 'Reservation confirmed. Your tickets are available below.');
 
             return $this->redirectToRoute('booking_reservation', ['id' => $reservation->getId()]);
         }

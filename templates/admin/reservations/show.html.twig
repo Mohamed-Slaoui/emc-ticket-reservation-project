@@ -45,6 +45,10 @@
                     <div class="table__identity-mail">Total</div>
                     <div class="table__identity-name u-mono">{{ reservation.totalAmount }} {{ reservation.currency }}</div>
                 </div>
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Seats</div>
+                    <div class="table__identity-name">{{ reservation.items|length }}</div>
+                </div>
             </div>
 
             <div class="table-wrap">
@@ -71,6 +75,61 @@
                     </tbody>
                 </table>
             </div>
+
+            {% if reservation.payments is not empty %}
+                <h2 class="table__identity-name" style="margin: var(--space-5) 0 var(--space-3);">Payments and refunds</h2>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Captured at</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in reservation.payments %}
+                                <tr>
+                                    <td>{{ payment.method.value == 'ONLINE' ? 'Online' : (payment.method.value == 'CASH' ? 'Cash' : 'Card terminal') }}</td>
+                                    <td class="u-mono">{{ payment.amount }} {{ payment.currency }}</td>
+                                    <td>
+                                        {% if payment.status.value == 'SUCCEEDED' %}
+                                            <span class="badge badge--success">Succeeded</span>
+                                        {% elseif payment.status.value == 'FAILED' %}
+                                            <span class="badge badge--danger">Failed</span>
+                                        {% else %}
+                                            <span class="badge">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="u-mono u-small">{{ payment.completedAt ? payment.completedAt|date('d/m/Y H:i') : '—' }}</td>
+                                </tr>
+                                {% for refund in payment.refunds %}
+                                    <tr style="background: var(--surface-muted);">
+                                        <td class="u-muted u-small">Refund</td>
+                                        <td class="u-mono u-muted u-small">{{ refund.amount }} {{ payment.currency }}</td>
+                                        <td>
+                                            {% if refund.status.value == 'SUCCEEDED' %}
+                                                <span class="badge badge--success">Succeeded</span>
+                                            {% elseif refund.status.value == 'FAILED' %}
+                                                <span class="badge badge--danger">Failed</span>
+                                            {% else %}
+                                                <span class="badge badge--warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="u-mono u-small">{{ refund.completedAt ? refund.completedAt|date('d/m/Y H:i') : refund.createdAt|date('d/m/Y H:i') }}</td>
+                                    </tr>
+                                    {% if refund.reason %}
+                                        <tr style="background: var(--surface-muted);">
+                                            <td colspan="4" class="u-muted u-small">Reason: {{ refund.reason }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
 
             {% if tickets is not empty %}
                 <h2 class="table__identity-name" style="margin: var(--space-5) 0 var(--space-3);">Tickets</h2>
@@ -99,19 +158,19 @@
             {% else %}
                 <p class="u-muted u-small" style="margin-top: var(--space-4);">No ticket yet — payment is pending or the reservation is not confirmed.</p>
             {% endif %}
-        </div>
 
-        {% if status in ['HELD', 'CONFIRMED'] %}
-            <div class="form__actions" style="margin-top: var(--space-5);">
-                <form method="post" action="{{ path('admin_reservation_cancel', {id: reservation.id}) }}"
-                      data-turbo-confirm="Cancel this reservation?{% if status == 'CONFIRMED' %} A full refund is issued and the tickets are voided.{% endif %}">
-                    <input type="hidden" name="_token" value="{{ csrf_token('cancel_reservation_' ~ reservation.id) }}">
-                    <button type="submit" class="button button--danger" style="margin: 10px 20px">
-                        {{ icon('close', 'icon icon--sm') }}
-                        Cancel this reservation
-                    </button>
-                </form>
-            </div>
-        {% endif %}
+            {% if status in ['HELD', 'CONFIRMED'] %}
+                <div class="form__actions" style="margin-top: var(--space-5);">
+                    <form method="post" action="{{ path('admin_reservation_cancel', {id: reservation.id}) }}"
+                          data-turbo-confirm="Cancel this reservation?{% if status == 'CONFIRMED' %} A full refund is issued and the tickets are voided.{% endif %}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('cancel_reservation_' ~ reservation.id) }}">
+                        <button type="submit" class="button button--danger">
+                            {{ icon('close', 'icon icon--sm') }}
+                            Cancel this reservation
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}

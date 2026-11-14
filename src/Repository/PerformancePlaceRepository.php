@@ -69,6 +69,29 @@ class PerformancePlaceRepository extends ServiceEntityRepository
         return $places;
     }
 
+    /**
+     * The occupancy of a performance, per zone.
+     *
+     * @return array<int, array{zone: \App\Entity\LayoutZone, available: int, held: int, sold: int, blocked: int}>
+     */
+    public function occupancy(Performance $performance): array
+    {
+        $byZone = [];
+
+        foreach ($this->findForPerformance($performance) as $place) {
+            $zone = $place->getLayoutPlace()->getLayoutZone();
+            $zoneId = (int) $zone->getId();
+
+            if (!isset($byZone[$zoneId])) {
+                $byZone[$zoneId] = ['zone' => $zone, 'available' => 0, 'held' => 0, 'sold' => 0, 'blocked' => 0];
+            }
+
+            $byZone[$zoneId][strtolower($place->getStatus()->value)]++;
+        }
+
+        return $byZone;
+    }
+
     public function countForPerformance(Performance $performance): int
     {
         return (int) $this->createQueryBuilder('pp')

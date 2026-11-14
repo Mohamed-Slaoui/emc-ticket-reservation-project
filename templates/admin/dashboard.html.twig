@@ -7,76 +7,157 @@
 {% block content %}
     {% include '_components/page_header.html.twig' with {
         title: 'Dashboard',
-        subtitle: 'The configuration of the venue, at a glance.',
-        action_label: 'Accounts',
-        action_path: path('admin_users'),
-        action_icon: 'users',
-        action_variant: 'outline',
+        subtitle: 'Occupancy, revenue and the activity of the venue.',
     } %}
 
     {% include '_components/flash.html.twig' %}
 
     <div class="grid grid--stats" style="margin-bottom: var(--space-5);">
-        {% for stat in stats %}
-            <div class="stat {{ loop.index == 1 ? 'stat--accent' : '' }}">
-                <div class="stat__head">
-                    <span class="stat__label">{{ stat.label }}</span>
-                    <span class="card__icon" style="{{ loop.index == 1 ? 'background: rgba(255,255,255,.16); color: #fff;' : '' }}">
-                        {{ icon(stat.icon, 'icon icon--sm') }}
-                    </span>
-                </div>
-                <span class="stat__value">{{ stat.value }}</span>
+        <div class="stat stat--accent">
+            <div class="stat__head">
+                <span class="stat__label">Gross revenue</span>
+                <span class="card__icon" style="background: rgba(255,255,255,.16); color: #fff;">
+                    {{ icon('pricing', 'icon icon--sm') }}
+                </span>
             </div>
-        {% endfor %}
+            <span class="stat__value u-mono">{{ gross }} MAD</span>
+        </div>
+        <div class="stat">
+            <div class="stat__head">
+                <span class="stat__label">Net revenue</span>
+                <span class="card__icon">{{ icon('check', 'icon icon--sm') }}</span>
+            </div>
+            <span class="stat__value u-mono">{{ net }} MAD</span>
+        </div>
+        <div class="stat">
+            <div class="stat__head">
+                <span class="stat__label">Refunds</span>
+                <span class="card__icon">{{ icon('pricing', 'icon icon--sm') }}</span>
+            </div>
+            <span class="stat__value u-mono">{{ refunds }} MAD</span>
+        </div>
     </div>
 
-    {% set policy %}
-        {% if hold_duration %}
-            <p class="stat__value" style="font-size: var(--text-2xl);">
-                {{ hold_duration }} <span class="u-muted" style="font-size: var(--text-md); font-weight: 400;">minutes</span>
-            </p>
-        {% else %}
-            <p class="u-muted">No policy has been configured yet.</p>
-        {% endif %}
-    {% endset %}
-
-    {% set steps %}
-        <div class="list">
-            <div class="list__item">
-                <span class="card__icon">{{ icon('venue', 'icon icon--sm') }}</span>
-                <div class="list__main">
-                    <p class="list__title">Venue, rooms and seats</p>
-                    <p class="list__meta">Describe the physical venue.</p>
-                </div>
-                <span class="badge badge--accent">Next</span>
+    <div class="grid grid--halves" style="margin-bottom: var(--space-5);">
+        <div class="card card--flat">
+            <div class="card__header">
+                <h2 class="card__title">Revenue by tariff</h2>
+                <p class="card__subtitle">The confirmed sales, grouped by the tariff frozen on the item.</p>
             </div>
-            <div class="list__item">
-                <span class="card__icon">{{ icon('layout', 'icon icon--sm') }}</span>
-                <div class="list__main">
-                    <p class="list__title">Seating layouts</p>
-                    <p class="list__meta">Group the seats into zones.</p>
-                </div>
-            </div>
-            <div class="list__item">
-                <span class="card__icon">{{ icon('calendar', 'icon icon--sm') }}</span>
-                <div class="list__main">
-                    <p class="list__title">Events and performances</p>
-                    <p class="list__meta">Schedule the shows.</p>
-                </div>
+            <div class="card__body" style="padding: 0;">
+                {% if revenueByTariff is empty %}
+                    <p class="u-muted u-small" style="padding: var(--space-4);">No sale has been confirmed yet.</p>
+                {% else %}
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Tariff</th>
+                                    <th>Seats</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in revenueByTariff %}
+                                    <tr>
+                                        <td>{{ row.name }}</td>
+                                        <td class="u-mono">{{ row.seats }}</td>
+                                        <td class="u-mono">{{ row.amount }} MAD</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
             </div>
         </div>
-    {% endset %}
 
-    <div class="grid grid--halves">
-        {% include '_components/card.html.twig' with {
-            title: 'Booking policy',
-            subtitle: 'The temporary hold applied to every reservation.',
-            body: policy,
-        } %}
-        {% include '_components/card.html.twig' with {
-            title: 'Next steps',
-            subtitle: 'The administration screens are delivered one by one.',
-            body: steps,
-        } %}
+        <div class="card card--flat">
+            <div class="card__header">
+                <h2 class="card__title">Booking policy</h2>
+                <p class="card__subtitle">The temporary hold applied to every reservation.</p>
+            </div>
+            <div class="card__body">
+                {% if hold_duration %}
+                    <p class="stat__value" style="font-size: var(--text-2xl);">
+                        {{ hold_duration }} <span class="u-muted" style="font-size: var(--text-md); font-weight: 400;">minutes</span>
+                    </p>
+                {% else %}
+                    <p class="u-muted">No policy has been configured yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card card--flat" style="margin-bottom: var(--space-5);">
+        <div class="card__header">
+            <h2 class="card__title">Occupancy of the on-sale shows</h2>
+            <p class="card__subtitle">Sold places / saleable capacity, per zone. Blocked seats are excluded from the capacity.</p>
+        </div>
+        <div class="card__body" style="padding: 0;">
+            {% if occupancy is empty %}
+                <p class="u-muted u-small" style="padding: var(--space-4);">No show is on sale yet — the published programme appears here.</p>
+            {% else %}
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Show</th>
+                                <th>Date</th>
+                                <th>Zone</th>
+                                <th>Sold</th>
+                                <th>Capacity</th>
+                                <th>Occupancy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for o in occupancy %}
+                                {% set zoneCount = o.byZone|length %}
+                                {% for zoneId, zone in o.byZone %}
+                                    <tr>
+                                        {% if loop.first %}
+                                            <td rowspan="{{ zoneCount }}" style="vertical-align: top; font-weight: var(--weight-medium);">
+                                                {{ labels[o.performance.id]|default(o.performance.event.title) }}
+                                            </td>
+                                            <td class="u-mono u-nowrap" rowspan="{{ zoneCount }}" style="vertical-align: top;">
+                                                {{ o.performance.startsAt|date('d/m/Y H:i') }}
+                                            </td>
+                                        {% endif %}
+                                        <td>{{ zone.zone.name }}</td>
+                                        <td class="u-mono">{{ zone.sold }}</td>
+                                        <td class="u-mono">{{ zone.available + zone.held + zone.sold }}</td>
+                                        <td class="u-mono">
+                                            {% set saleable = zone.available + zone.held + zone.sold %}
+                                            {{ saleable > 0 ? (zone.sold * 100 / saleable)|round(1) ~ '%' : '—' }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card card--flat">
+        <div class="card__header">
+            <h2 class="card__title">Configuration</h2>
+            <p class="card__subtitle">What has been configured so far.</p>
+        </div>
+        <div class="card__body" style="padding: 0;">
+            <div class="table-wrap">
+                <table class="table">
+                    <tbody>
+                        {% for stat in stats %}
+                            <tr>
+                                <td>{{ stat.label }}</td>
+                                <td class="u-mono" style="text-align: right;">{{ stat.value }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 {% endblock %}

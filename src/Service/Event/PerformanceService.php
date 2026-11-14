@@ -148,11 +148,13 @@ class PerformanceService
 
                     foreach ($reservation->getPayments() as $payment) {
                         if (PaymentStatus::Succeeded === $payment->getStatus()) {
-                            $this->entityManager->persist(new Refund(
+                            $refund = new Refund(
                                 $payment,
                                 $payment->getAmount(),
                                 'Performance cancelled.',
-                            ));
+                            );
+                            $refund->markSucceeded();
+                            $this->entityManager->persist($refund);
                         }
                     }
 

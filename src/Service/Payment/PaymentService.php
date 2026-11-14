@@ -88,12 +88,21 @@ class PaymentService
      * @throws \LogicException when the reservation cannot be confirmed — the
      *                         hold has expired (INV-03)
      */
-    public function complete(Reservation $reservation, PaymentMethod $method = PaymentMethod::Cash): Payment
+    public function complete(Reservation $reservation, PaymentMethod $method = PaymentMethod::Cash): ?Payment
     {
         // The engine runs its own transaction; Doctrine reuses the connection,
         // so both still see one atomic commit.
-        return $this->entityManager->wrapInTransaction(function () use ($reservation, $method): Payment {
+        return $this->entityManager->wrapInTransaction(function () use ($reservation, $method): ?Payment {
             $this->reservations->confirm($reservation);
+
+            // A free reservation (invitation tariff) issues no payment —
+            // there is nothing to capture.
+            if (bccomp($reservation->getTotalAmount(), '0.00', 2) === 0) {
+                $this->issueTickets($reservation);
+                $this->entityManager->flush();
+
+                return null;
+            }
 
             $payment = new Payment(
                 $reservation,
