@@ -370,12 +370,30 @@ against a supporting document).
 | Public browsing: the programme, the event page and the seat map need no account; browsing works anonymously. | `BookingController::index() / event() / show()` |
 | Holding seats and paying requires an account — sign up in the shop (`/register`) or an administration-created account. | `security.yaml` — `^/reservations` → `ROLE_USER` |
 | Published events only: a draft answers **404**. | `BookingController::assertPublished()` |
-| The seat map renders every inventory row with its state and a zone-coded swatch; the `booking` Stimulus controller counts seats and the running total. | `BookingController::seatMap()` + `assets/controllers/booking_controller.js` |
+| The seat map renders every inventory row with its state and a zone-coded swatch; the `booking` Stimulus controller counts seats and the running total. | `BookingController::show()` + `SeatMapViewBuilder::build()` + `assets/controllers/booking_controller.js` |
 | The hold goes through the shared engine — full tariff online by default; an administrator may apply group / invitation. | `BookingController::hold()` → `ReservationService::hold()` |
 | Paying confirms in one transaction — reservation CONFIRMED, seats SOLD, a captured `Payment` (method ONLINE), one `Ticket` per item (INV-06). | `PaymentService::complete()` + `ReservationService::confirm()` |
 | Online payment is **simulated** (no provider is imposed — docs/DECISIONS.md A1). | `PaymentService` |
 | A customer may see, pay or cancel only **their** reservations; anyone else gets **403**. | `BookingController::assertOwned()` |
 | The administration manages reservations read-only at `/admin/reservations` — list and detail, never an editor. | `Admin\ReservationController` |
+
+### 4.10 The box office
+
+`/box-office` — the seller's desk (WF-2, docs/WORKFLOWS.md). Same seat map, same engine, same tariffs and prices as the online shop; INV-10 in one sentence. The box-office role sells — an administrator inherits it.
+
+| Rule | Where |
+|---|---|
+| The desk lists the on-sale shows — published events only, searchable by event, venue or room. | `BoxOfficeController::index()` + `PerformanceRepository::findOnSale()` |
+| The seller sees the same seat map with every inventory row, zone-coded. | `BoxOfficeController::performance()` + `SeatMapViewBuilder` |
+| The cell list is built from **the seller's permissions**: the administrator sells all four tariffs; a box-office account without permissions gets FULL + GROUP only — the reduced and invitation options are never offered to someone who cannot apply them. | `BoxOfficeController::authorizedTariffs()` |
+| The reduced tariff requires the **supporting document verified in person** — by the seller marked with `can_sell_reduced_tariff`, with the document ticked for this sale, checked server-side (Q5, BR-11). | `ReservationService::hold()` |
+| The invitation tariff belongs to the sellers the administrator authorizes (`can_sell_invitation_tariff`) — an administrator sells it regardless, a box-office account without the permission never sees or applies it (BR-11). | `ReservationService::hold()` |
+| The group tariff needs at least 5 seats in the reservation, all at the group rate (BR-12) — no permission, a rule. | `ReservationService::hold()` |
+| The two tariff permissions live on the **user**, granted by the administrator from the account form's "Tariff Permissions" section (visible only for box-office accounts). | Migration `Version20261114163102` + `User::canSellReducedTariff()` / `User::canSellInvitationTariff()` |
+| The sale is **one transaction**: hold → confirm → `Payment` (CASH or CARD_TERMINAL) → one `Ticket` per item. A failed sale never leaves a lone hold behind. | `PaymentService::sellAtCounter()` |
+| The reservation is **not** editable or cancellable from the box office — refunds go through the administration (Phase 12). | `BoxOfficeController` — read-only afterwards |
+| "Search reservations": find a sale by reference or by customer email. | `BoxOfficeController::reservations()` + `ReservationRepository::searchForStaff()` |
+| The sidebar shows "Box office" for `ROLE_BOX_OFFICE`, and "Book tickets" for everyone. | `templates/_partials/sidebar.html.twig` |
 
 ### 4.10 The cascading deletions
 
@@ -426,7 +444,7 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 6 | Tariffs and performance pricing | **Completed** |
 | 7 | Inventory availability and reservation foundation | **Completed** |
 | 8 | Customer booking experience | **Review required** |
-| 9 | Box-office sales | Pending |
+| 9 | Box-office sales | **Review required** |
 | 10 | Online payment integration | Pending — a **simulated** payment was delivered in Phase 8 (docs/DECISIONS.md A1); a real provider would plug in here |
 | 11 | Ticket issuance and entry validation | Pending — **tickets are issued at payment** (one per item); the QR image and the entry scanner remain |
 | 12 | Administrator reservation and performance management | Pending |
@@ -485,7 +503,10 @@ composer validate
 > failures. The commands become meaningful as soon as Phase 1 lands.
 >
 > **Since Phase 1**, all the commands above are effective: the schema is created by the
-> migration, the fixtures populate the demo data, and the suite runs 228 tests.
+> migrations, the fixtures populate the demo data, and the suite runs 240 tests. The demo
+> fixtures (`AppFixtures.php`) are super-set in development — two venues, three rooms across
+> three layout families, shows in every status, prices on every zone × tariff — and stay the
+> deterministic set in testing (docs/DECISIONS.md, 2026-11-14).
 
 ---
 

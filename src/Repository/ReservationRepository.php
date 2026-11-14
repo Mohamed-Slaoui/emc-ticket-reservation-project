@@ -36,6 +36,40 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Finds recent reservations by reference or by customer email — the
+     * box office's reservation lookup.
+     *
+     * @return list<Reservation>
+     */
+    public function searchForStaff(string $query, int $limit = 20): array
+    {
+        $term = trim($query);
+
+        if ('' === $term) {
+            return $this->findRecent($limit);
+        }
+
+        $term = '%'.str_replace(['%', '_'], ['', ''], $term).'%';
+
+        /** @var list<Reservation> $reservations */
+        $reservations = $this->createQueryBuilder('r')
+            ->leftJoin('r.customer', 'c')
+            ->addSelect('c')
+            ->leftJoin('r.performance', 'p')
+            ->addSelect('p')
+            ->leftJoin('p.event', 'e')
+            ->addSelect('e')
+            ->andWhere('r.reference LIKE :term OR c.email LIKE :term')
+            ->setParameter('term', $term)
+            ->orderBy('r.createdAt', 'DESC')
+            ->setMaxResults(max(1, $limit))
+            ->getQuery()
+            ->getResult();
+
+        return $reservations;
+    }
+
+    /**
      * The most recent reservations, the latest first — for the
      * administration overview.
      *

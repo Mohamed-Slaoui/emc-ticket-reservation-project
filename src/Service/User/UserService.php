@@ -40,9 +40,13 @@ class UserService
         string $lastName,
         array $roles = [User::ROLE_CUSTOMER],
         ?string $phone = null,
+        bool $canSellReducedTariff = false,
+        bool $canSellInvitationTariff = false,
     ): User {
         $user = new User($email, '', $firstName, $lastName, $roles, true, $phone);
         $user->setPasswordHash($this->passwordHasher->hashPassword($user, $plainPassword));
+        $user->setCanSellReducedTariff($canSellReducedTariff);
+        $user->setCanSellInvitationTariff($canSellInvitationTariff);
 
         $this->validate($user);
 
@@ -58,12 +62,14 @@ class UserService
      *
      * @throws \InvalidArgumentException when the data is invalid
      */
-    public function update(User $user, string $firstName, string $lastName, array $roles, ?string $phone = null): void
+    public function update(User $user, string $firstName, string $lastName, array $roles, ?string $phone = null, bool $canSellReducedTariff = false, bool $canSellInvitationTariff = false): void
     {
         $user->setFirstName($firstName);
         $user->setLastName($lastName);
         $user->setPhone($phone);
         $user->setRoles($roles);
+        $user->setCanSellReducedTariff($canSellReducedTariff);
+        $user->setCanSellInvitationTariff($canSellInvitationTariff);
 
         $this->validate($user);
 

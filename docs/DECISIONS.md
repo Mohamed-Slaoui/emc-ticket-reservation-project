@@ -164,6 +164,55 @@ The five questions from the specification, with the chosen answer and its justif
   sign-up form issues a customer account and signs nothing up until it is valid; a guest that
   is already signed in is redirected to the shop.
 
+### 2026-11-14 - The demo fixtures grow into a rich dataset (dev only)
+
+- **Problem:** the development fixtures were deterministic but minimal — one venue,
+  one room, one draft event, nothing published. The shop and the administration did not
+  look alive in a fresh clone, and could not be exercised end to end without manual work.
+- **Decision:** the development environment loads a full sample (the same file, gated to
+  development only — tests keep the small deterministic set because they purge and reload
+  per test). The sample covers:
+  - two venues — Théâtre Al-Mansour (Grande Salle 400 seats + Salle Studio 60 seats) and
+    Maison des arts (Petite Salle 140 seats + Salle de lecture 90 seats);
+  - one layout per configuration family (three zones, two zones, and a single-zone
+    capacity 90 for the lecture hall), with the full seating map in every case;
+  - six events in every status — several published with shows and prices on every zone ×
+    tariff, one draft for the administrator to publish, one archived for the archived filter;
+  - the full set of accounts — every role, every permission combination (box office sells
+    everything, limited box office sells nothing, one seller with reduced only, customers,
+    customer self sign-up), and the booking policy.
+  - prices on every zone and every tariff in MAD, so the publication check passes out of
+    the box and any event is sellable.
+- **Impact:** the test suite is **unchanged** — the testing environment never sees the
+  rich dataset (one venue, one draft event, and no prices with no performances), so the
+  assertions on the fixtures stay valid. The demo dataset is the development bootstrap,
+  not the test bootstrap.
+
+### 2026-11-14 - The box-office tariff permissions
+
+- **Question:** should the reduced and invitation tariffs be offered to every seller at the
+  counter, behind a checkbox ("document verified", "invitation authorized")?
+- **Decision:** no. These tariffs are rights of **the seller**, not of the sale. They are now
+  per-account permissions (`can_sell_reduced_tariff`, `can_sell_invitation_tariff`),
+  granted by the administrator from the account form, under a "Tariff Permissions" section
+  that only appears for box-office accounts. The two flags are database columns, seeded to
+  `0` for every account created before this change — safest by default.
+- **Decision:** the **administrator sells every tariff** without consulting the permissions.
+  The box-office role alone is not sufficient: without the boxoffice permission, the reduced
+  and invitation tariffs are not offered — neither on screen, nor at the engine (server-side).
+- **Decision:** the **group** tariff keeps its rule (BR-12 — a minimum of five seats at the
+  group rate), not a permission. The **full** tariff needs no permission either.
+- **Decision:** the "Invitation tariff authorized" checkbox is **gone** — the seller's
+  permission is read server-side from the account, never from the submitted form. The
+  "Document verified in person" checkbox remains, visible only when the Reduced tariff is
+  selected: it is not an authorization, it is evidence about the sale, and it is verified
+  again at the engine (Q5).
+- **Impact:** the box-office screen offers exactly the tariffs the seller is entitled to
+  apply. A test fixture pins the limited account (`caisse-limited@billetterie.demo`) with
+  no permissions, so the forbidden paths are verified. `ReservationService::hold()` evaluates
+  the authorization from the seller (the `invitationAuthorized` parameter is deleted) —
+  a compromised form cannot bypass it.
+
 ### 2026-11-13 - The public shop, separated from the administration
 
 - **Decision:** the public shop lives at `/` — it is the home of the project, for everyone.
@@ -341,4 +390,6 @@ These points are **excluded** from the first version to guarantee a solid delive
 | The tariff catalogue is fixed (4 categories, enforced by the database) | 2026-11-13 | Section 1 — the 2026-11-13 entry, and Q5 |
 | The public site at / is separated from the administration; simulated online payment; one shared shop | 2026-11-13 | Section 1 — the 2026-11-13 entry (two entries, same day) |
 | Self sign-up of the ticket office; the site is branded EMC Ticketing | 2026-11-14 | Section 1 — the 2026-11-14 entry |
+| Box-office tariff permissions (per-account, admin-granted; admin sells everything) | 2026-11-14 | Section 1 — the 2026-11-14 entry |
+| Rich demo dataset in development only (two venues, four rooms, every show status) | 2026-11-14 | Section 1 — the 2026-11-14 entry |
 | Approved business workflows | 2026-11-10 | [`WORKFLOWS.md`](WORKFLOWS.md) |

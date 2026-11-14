@@ -94,14 +94,13 @@ Asynchronous, idempotent Google Sheets synchronisation — one row per ticket.
 | Role | Can do |
 |---|---|
 | `CUSTOMER` | Browse published events, select seats, hold and pay for a reservation, download their own tickets, cancel their own unpaid holds. |
-| `BOX_OFFICE` | Everything a customer can do, **plus**: sell at the counter, apply the reduced / group / invitation tariffs, verify eligibility in person, print tickets, search reservations. |
-| `ADMIN` | Everything above, **plus**: configure the venue, layouts, events, prices and the booking policy, publish an event, cancel a confirmed reservation, issue a refund, cancel a performance, view the dashboard. |
+| `BOX_OFFICE` | Everything a customer can do, **plus**: sell at the counter, apply the reduced / group / invitation tariffs (the reduced and invitation tariffs are granted per seller by the administrator), verify eligibility in person, print tickets, search reservations. |
+| `ADMIN` | Everything above, **plus**: configure the venue, layouts, events, prices and the booking policy, publish an event, cancel a confirmed reservation, issue a refund, cancel a performance, view the dashboard. The administrator sells every tariff anywhere. |
 
 Three rules are enforced server-side and are the basis of the whole authorisation model:
 
 - The **full** tariff is the only one a customer may apply online.
-- The **reduced** tariff requires in-person verification of a supporting document.
-- The **group** and **invitation** tariffs are reserved for the box office and administrators.
+- The **group** tariff needs at least five seats at the group rate — offered to every seller at the counter, and to administrators in the shop. The **reduced** tariff requires a box-office authorization (per-seller, granted by an administrator) **and** the in-person verification of a supporting document. The **invitation** tariff is reserved to sellers the administrator authorizes — or to an administrator.
 
 A box-office employee **cannot** cancel a confirmed reservation — that is an administrator
 action, and it always triggers a full refund.
@@ -236,7 +235,7 @@ php bin/console doctrine:database:create
 # 4. Apply the migrations
 php bin/console doctrine:migrations:migrate
 
-# 5. Load the demo data (venue, 400 seats, tariffs, demo accounts)
+# 5. Load the demo data (venues, rooms, layouts, shows, tariffs, accounts)
 php bin/console doctrine:fixtures:load
 
 # 6. Run the application
@@ -246,9 +245,36 @@ php -S localhost:8000 -t public
 The application is then reachable on <http://localhost:8000>, and Mailpit on
 <http://localhost:8025>.
 
-> **Current state (Phase 1).** The schema and the demo data exist: steps 1–6 all work from
-> a fresh clone. The application has **no interface yet** — the HTTP layer arrives in
-> Phase 2 and later.
+> **Current state.** The schema, the demo data and the application all boot from a fresh
+> clone. The demo data covers the whole domain: two venues, three rooms over two layout
+> families, multiple events in every status, performances with prices and seats on every
+> zone and every tariff, and an account for every role. Re-running the fixtures **wipes
+> and re-seeds the database** — only in development, and deliberately not in tests.
+
+## 10.1 The demo data
+
+The fixtures (`src/DataFixtures/AppFixtures.php`) load in development; the testing
+environment reloads them per test — the same file, the same contents, every time.
+
+**The sample** (development only):
+
+| What | Detail |
+|---|---|
+| **Venues** | Théâtre Al-Mansour · Maison des arts |
+| **Rooms** | Grande Salle (400 seats) · Salle Studio (60) · Petite Salle (140) · Salle de lecture (90) |
+| **Layouts** | Configuration Standard (ORC/MEZ/BAL) · Studio (ORC/MEZ) · Résidence (ORC/MEZ) · Lecture (ORC) — each matches the room's seat count |
+| **Shows** | *Soirée de gala* (2 performances, Grande Salle) · *Concert de La Scala* · *Nuit du jazz & du swing* (Salle Studio) · *Un conte pour les enfants* (Petite Salle) — all published with prices on every zone × tariff; *Journée des portes ouvertes* draft (publish it yourself) · *Le printemps du théâtre* archived |
+| **Accounts** | `admin@billetterie.demo` (admin) · `caisse@billetterie.demo` (box office, reduced + invitation) · `vendor@billetterie.demo` (box office, **reduced only**) · `caisse-limited@billetterie.demo` (box office, **none**) · `client@billetterie.demo`, `souad@billetterie.demo` (customers) — password `demo1234` |
+| **Tariffs** | the fixed four: `FULL`, `REDUCED` (proof required), `GROUP` (5+), `INVITATION` |
+
+Every performance carries **prices on every zone, for every tariff, in MAD** — the
+publication checks pass out of the box, so any
+[published event](#6-user-roles-and-permissions) is sellable from the counter and the
+shop.
+
+> **Do not re-run `doctrine:fixtures:load` in development after you have done anything
+> in the browser.** It wipes every row — every purchase, every reservation. Re-running
+> is fine from a fresh clone, and in testing (it runs against the test database).
 
 ## 11. Environment configuration
 
@@ -367,7 +393,7 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 6 | Tariffs and pricing | **Completed** |
 | 7 | Reservation foundation | **Review required** |
 | 8 | Customer booking | **Review required** |
-| 9 | Box-office sales | Pending |
+| 9 | Box-office sales | **Review required** |
 | 10 | Online payments | Pending |
 | 11 | Tickets and entry | Pending |
 | 12 | Administrative controls | Pending |
@@ -418,13 +444,23 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
   expires by itself if unpaid. The online payment is simulated (per `docs/DECISIONS.md`
   A1) — and paying confirms the reservation, issues one ticket per seat and delivers the
   tickets on the confirmation page. Administrators use the same shop (they keep full, group
-  and invitation tariffs); the reduced tariff is sold at the counter. The administration
+  and invitation tariffs, as well as the reduced one); the reduced tariff is sold at the counter. The administration
   also gets a read-only reservations screen (`/admin/reservations`).
+- **The box office** — `/box-office`: search the on-sale shows, open the same seat map the
+  customer sees, choose the tariff the seller is authorized to apply (full and group for
+  everyone; reduced and invitation only when the administrator granted the per-seller tariff
+  permissions — everything checked server-side, BR-11 and BR-12), choose cash or card
+  terminal, and sell. One transaction:
+  the reservation is confirmed, the seats are marked SOLD (INV-02), the payment recorded
+  and one ticket per seat issued. Every box-office employee can find a reservation by
+  reference or customer email (`/box-office/reservations`). The same engine, the same
+  prices, the same tickets — one channel, two doors.
 
 **What comes next**
 
-Phase 9 opens the box office: search a performance, the seat map for the seller, the tariff
-authorisations and the counter sale through the same reservation engine.
+Phase 10 wires the online payment to a real provider — until now it is simulated,
+per `docs/DECISIONS.md` A1. A real provider would plug into `PaymentService` with the same
+confirm-payment-issue-tickets transaction.
 
 ## 18. Known limitations and MVP boundaries
 

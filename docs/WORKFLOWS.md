@@ -149,13 +149,18 @@ create a full refund request
 | Tariff | Who may apply it | Extra check |
 |---|---|---|
 | Full | Customer, box office, admin | — |
-| Reduced | Box office, admin | Eligibility document verified **in person** |
+| Reduced | Box office (granted permission), admin | Eligibility document verified **in person** |
 | Group | Box office, admin | Minimum 5 places, all at the group rate |
-| Invitation | Box office, admin | Box-office permission verified |
+| Invitation | Box office (granted permission), admin | The seller is authorized by the administrator |
+
+The **reduced** and **invitation** tariffs are per-seller authorizations, granted by the
+administrator from the account form ("Tariff Permissions"). The **group** tariff is a rule,
+not a permission. An administrator applies every tariff; a box-office account applies only
+those granted.
 
 A reduced tariff requires an explicit eligibility confirmation; an invitation tariff
-requires an explicit permission check. Both are **server-side** checks — hiding an option
-in the interface is never sufficient (Q5, BR-11).
+requires the seller's account to hold the `can_sell_invitation_tariff` permission. Both are
+**server-side** checks — hiding an option in the interface is never sufficient (Q5, BR-11).
 
 ### 3.3 Sale — one transaction
 

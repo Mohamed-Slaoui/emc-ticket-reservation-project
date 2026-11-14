@@ -26,6 +26,9 @@
             <a href="{{ path('booking_index') }}">Programme</a>
             {% if is_granted('IS_AUTHENTICATED_FULLY') %}
                 <a href="{{ path('booking_reservations') }}">My reservations</a>
+                {% if is_granted('ROLE_BOX_OFFICE') %}
+                    <a href="{{ path('box_office_index') }}">Box office</a>
+                {% endif %}
             {% endif %}
         </nav>
 

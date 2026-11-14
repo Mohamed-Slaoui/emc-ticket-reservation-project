@@ -39,7 +39,7 @@
                                 <td>
                                     <div class="table__identity-text">
                                         <div class="table__identity-name">
-                                            <a href="{{ path('booking_event', {id: performance.event.id}) }}">{{ performance.event.title }}</a>
+                                            <a href="{{ path('booking_event', {id: performance.event.id}) }}">{{ labels[performance.id]|default(performance.event.title) }}</a>
                                         </div>
                                         <div class="table__identity-mail">{{ performance.seatingLayout.room.venue.name }}</div>
                                     </div>

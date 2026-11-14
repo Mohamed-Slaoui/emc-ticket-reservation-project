@@ -29,6 +29,10 @@ final class UserFormData
      */
     public ?string $role = User::ROLE_CUSTOMER;
 
+    public bool $canSellReducedTariff = false;
+
+    public bool $canSellInvitationTariff = false;
+
     public ?string $plainPassword = null;
 
     public bool $isActive = true;

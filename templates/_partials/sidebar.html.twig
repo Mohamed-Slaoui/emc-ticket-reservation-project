@@ -21,6 +21,12 @@
                     <span class="sidebar__label">Dashboard</span>
                 </a>
 
+                <a class="sidebar__item {{ current_route starts with 'admin_user' ? 'sidebar__item--active' }}"
+                   href="{{ path('admin_users') }}">
+                    {{ icon('users') }}
+                    <span class="sidebar__label">Users</span>
+                </a>
+
                 <a class="sidebar__item {{ current_route starts with 'admin_venues' ? 'sidebar__item--active' }}"
                    href="{{ path('admin_venues') }}">
                     {{ icon('venue') }}
@@ -63,18 +69,21 @@
                     <span class="sidebar__label">Tariffs</span>
                 </a>
 
-                <a class="sidebar__item {{ current_route starts with 'admin_user' ? 'sidebar__item--active' }}"
-                   href="{{ path('admin_users') }}">
-                    {{ icon('users') }}
-                    <span class="sidebar__label">Users</span>
+            {% endif %}
+
+            {% if is_granted('ROLE_BOX_OFFICE') %}
+                <a class="sidebar__item {{ current_route starts with 'box_office' ? 'sidebar__item--active' }}"
+                   href="{{ path('box_office_index') }}">
+                    {{ icon('seat') }}
+                    <span class="sidebar__label">Box office</span>
                 </a>
             {% endif %}
 
-            {# <a class="sidebar__item {{ current_route starts with 'booking' ? 'sidebar__item--active' }}"
+            <a class="sidebar__item {{ current_route starts with 'booking' ? 'sidebar__item--active' }}"
                href="{{ path('booking_index') }}">
                 {{ icon('ticket') }}
                 <span class="sidebar__label">Book tickets</span>
-            </a> #}
+            </a>
         </div>
 
         <div class="sidebar__group">
@@ -107,3 +116,4 @@
 </aside>
 
 <div class="sidebar__scrim" data-sidebar-target="scrim" data-action="click->sidebar#close"></div>
+

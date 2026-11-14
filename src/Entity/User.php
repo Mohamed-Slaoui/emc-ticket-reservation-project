@@ -61,6 +61,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'boolean')]
     private bool $isActive = true;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $canSellReducedTariff = false;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $canSellInvitationTariff = false;
+
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
@@ -137,6 +143,38 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsActive(bool $isActive): void
     {
         $this->isActive = $isActive;
+    }
+
+    /**
+     * Whether this account may sell the reduced tariff at the counter.
+     *
+     * Only the reduced tariff requires it: full and group tariffs are
+     * authorized by the role itself, and an administrator sells every tariff
+     * regardless of this flag.
+     */
+    public function canSellReducedTariff(): bool
+    {
+        return $this->canSellReducedTariff;
+    }
+
+    public function setCanSellReducedTariff(bool $canSellReducedTariff): void
+    {
+        $this->canSellReducedTariff = $canSellReducedTariff;
+    }
+
+    /**
+     * Whether this account may sell the invitation tariff — BR-11.
+     *
+     * An administrator may sell the invitation tariff regardless of this flag.
+     */
+    public function canSellInvitationTariff(): bool
+    {
+        return $this->canSellInvitationTariff;
+    }
+
+    public function setCanSellInvitationTariff(bool $canSellInvitationTariff): void
+    {
+        $this->canSellInvitationTariff = $canSellInvitationTariff;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

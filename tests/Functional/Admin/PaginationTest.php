@@ -131,8 +131,8 @@ class PaginationTest extends FunctionalTestCase
         $crawler = $this->client->request('GET', '/admin/users');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(3, $crawler->filter('tbody tr'));
-        self::assertSelectorTextContains('.pagination__summary', '1–3 of 3');
+        self::assertCount(4, $crawler->filter('tbody tr'));
+        self::assertSelectorTextContains('.pagination__summary', '1–4 of 4');
     }
 
     public function test_the_navigation_of_the_accounts_keeps_the_search(): void

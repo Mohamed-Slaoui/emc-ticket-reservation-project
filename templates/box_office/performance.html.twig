@@ -1,0 +1,137 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}Sell — {{ label }}{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: label,
+        subtitle: performance.startsAt|date('d/m/Y H:i') ~ ' · ' ~ performance.seatingLayout.room.venue.name ~ ' — ' ~ performance.seatingLayout.room.name,
+        action_label: 'Back to the counter',
+        action_path: path('box_office_index'),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    {% if availableCount == 0 %}
+        <div class="alert alert--warning" style="margin-bottom: var(--space-4);">
+            <span class="alert__icon">{{ icon('alert', 'icon icon--sm') }}</span>
+            <div class="alert__body"><strong>Sold out.</strong> No seat is on sale for this show.</div>
+        </div>
+    {% endif %}
+
+    {% include '_components/flash.html.twig' %}
+
+    <form method="post" action="{{ path('box_office_sell', {id: performance.id}) }}"
+          data-controller="booking tariff-prices" data-booking-locked="false" data-turbo="false">
+        <script type="application/json" id="zone-prices-by-tariff">{{ pricesByTariff|json_encode|raw }}</script>
+        <input type="hidden" name="_token" value="{{ csrf_token('sell_' ~ performance.id) }}">
+
+        <div class="card card--flat">
+            <div class="card__body booking__summary">
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Date</div>
+                    <div class="table__identity-name">{{ performance.startsAt|date('l j F Y — H:i') }}</div>
+                </div>
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">From</div>
+                    <div class="table__identity-name u-mono">{% if fromAmount %}{{ fromAmount }} MAD{% else %}—{% endif %}</div>
+                </div>
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Seats left</div>
+                    <div class="table__identity-name">{{ availableCount }} / {{ totalCount }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card--flat" style="margin-top: var(--space-4);">
+            <div class="card__body">
+                <h2 class="table__identity-name" style="margin-bottom: var(--space-3);">Choose the seats</h2>
+
+                <div class="seatmap__legend">
+                    {% for zoneId, zone in zones %}
+                        <span class="seatmap__legend-item">
+                            <span class="zone-list__swatch zone-list__swatch--{{ zoneColors[zoneId] }}"></span>
+                            {{ zone.name }} — <span class="u-mono" data-zone-price="{{ zoneId }}">{% if zonePrices[zoneId] is defined and zonePrices[zoneId] %}{{ zonePrices[zoneId] }} MAD{% else %}—{% endif %}</span>
+                        </span>
+                    {% endfor %}
+                    <span class="seatmap__legend-item">
+                        <span class="zone-list__swatch" style="background: var(--text-muted); border-color: var(--text-muted);"></span>
+                        Sold
+                    </span>
+                    <span class="seatmap__legend-item">
+                        <span class="zone-list__swatch" style="background: var(--surface-muted); border-color: var(--border);"></span>
+                        Held
+                    </span>
+                </div>
+
+                <div class="seatmap">
+                    {% for rowLabel, seats in rows %}
+                        <div class="seatmap__row">
+                            <span class="seatmap__row-label">{{ rowLabel|default('—') }}</span>
+                            <div class="seatmap__seats">
+                                {% for seat in seats %}
+                                    {% set state = seat.status.value %}
+                                    {% set seatClass = state == 'AVAILABLE' ? 'seat--zone-' ~ zoneColors[seat.zoneId]
+                                        : (state == 'HELD' ? 'seat--held' : (state == 'SOLD' ? 'seat--sold' : 'seat--blocked')) %}
+                                    <label class="seat {{ seatClass }}"
+                                           title="{{ seat.code }} — {{ zones[seat.zoneId].name }}{{ state != 'AVAILABLE' ? ' — unavailable' : '' }}">
+                                        <input type="checkbox" name="places[]" value="{{ seat.inventoryPlace.id }}"
+                                               class="seat__input" data-price="{{ seat.price }}"
+                                               data-zone="{{ seat.zoneId }}"
+                                               data-action="change->booking#update"
+                                               {% if state != 'AVAILABLE' %}disabled{% endif %}
+                                               aria-label="Seat {{ seat.code }}">
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="form__grid" style="margin-top: var(--space-5);" data-controller="boxoffice-tariff">
+                    <fieldset class="booking__tariffs" style="grid-column: 1 / -1; margin-bottom: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); border: 0; padding: 0;">
+                        <legend class="u-small u-muted" style="margin-bottom: var(--space-2); width: 100%;">Tariff</legend>
+                        {% for tariff in tariffs %}
+                            <label class="form__card" title="{{ tariff.rule() }}">
+                                <input type="radio" name="tariff" value="{{ tariff.code }}" data-action="change->boxoffice-tariff#toggle" {{ tariff.code == 'FULL' ? 'checked' : '' }}>
+                                <span class="form__card-text">
+                                    <span class="form__card-title">{{ tariff.name }}</span>
+                                    <span class="form__card-desc">{{ tariff.code }}{% if tariff.requiresEligibilityProof() %} — document required{% endif %}</span>
+                                </span>
+                            </label>
+                        {% endfor %}
+                    </fieldset>
+
+                    <label class="form__card" title="Only when the supporting document has been verified in person (reduced tariff)."
+                           data-boxoffice-tariff-target="eligibility" hidden>
+                        <input type="checkbox" id="eligibility_verified" name="eligibility_verified" value="1">
+                        <span class="form__card-text">
+                            <span class="form__card-title">Document verified in person</span>
+                            <span class="form__card-desc">Required for the reduced tariff (Q5)</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="form__group" style="margin-top: var(--space-4);">
+                    <label class="form__label" for="payment_method">Payment</label>
+                    <select class="form__control" id="payment_method" name="payment_method">
+                        <option value="CASH">Cash</option>
+                        <option value="CARD_TERMINAL">Card terminal</option>
+                    </select>
+                </div>
+
+                <div class="form__actions booking__summary" style="margin-top: var(--space-5);">
+                    <span class="booking__summary-count"><span data-booking-target="count">0</span> seat(s)</span>
+                    <span class="booking__summary-total" data-booking-target="total">0.00 MAD</span>
+                    <button type="submit" class="button button--primary" data-booking-target="submit" disabled
+                            title="Sell — the seats are marked sold immediately.">
+                        {{ icon('ticket', 'icon icon--sm') }}
+                        Complete the sale
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

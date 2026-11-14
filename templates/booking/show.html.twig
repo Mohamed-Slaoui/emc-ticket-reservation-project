@@ -2,11 +2,11 @@
 
 {% from '_partials/icons.html.twig' import icon %}
 
-{% block title %}{{ performance.event.title }}{% endblock %}
+{% block title %}{{ label }}{% endblock %}
 
 {% block content %}
     {% include '_components/page_header.html.twig' with {
-        title: performance.event.title,
+        title: label,
         subtitle: performance.startsAt|date('d/m/Y H:i') ~ ' · ' ~ performance.seatingLayout.room.venue.name ~ ' — ' ~ performance.seatingLayout.room.name,
         action_label: 'Back to the programme',
         action_path: path('booking_index'),
@@ -58,7 +58,7 @@
                 <div class="booking__pick-head">
                     <h2 class="table__identity-name" style="margin: 0;">Choose your seats</h2>
 
-                    {% if is_granted('ROLE_ADMIN') %}
+                    {# {% if is_granted('ROLE_ADMIN') %}
                         <fieldset class="booking__tariffs">
                             <legend class="u-visually-hidden">Tariff</legend>
 
@@ -75,7 +75,7 @@
                                 Invitation
                             </label>
                         </fieldset>
-                    {% endif %}
+                    {% endif %} #}
                 </div>
 
                 <div class="seatmap__legend">

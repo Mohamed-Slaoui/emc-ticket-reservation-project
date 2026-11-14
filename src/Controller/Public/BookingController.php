@@ -18,6 +18,8 @@ use App\Repository\PerformancePriceRepository;
 use App\Repository\PerformanceRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\TariffRepository;
+use App\Service\Booking\PerformanceLabelService;
+use App\Service\Layout\SeatMapViewBuilder;
 use App\Service\Payment\PaymentService;
 use App\Service\Reservation\ReservationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -43,15 +45,13 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/')]
 class BookingController extends AbstractController
 {
-    /** The palette of the zones of a configuration, in order. */
-    private const ZONE_COLORS = 6;
-
     #[Route('', name: 'booking_index', methods: ['GET'])]
     public function index(
         PerformanceRepository $performances,
         PerformancePriceRepository $prices,
         PerformancePlaceRepository $places,
         TariffRepository $tariffs,
+        PerformanceLabelService $labels,
     ): Response {
         $onSale = $performances->findOnSale();
         $full = $tariffs->findOneBy(['code' => TariffCode::Full->value]);
@@ -69,8 +69,10 @@ class BookingController extends AbstractController
             'performances' => $onSale,
             'fromAmounts' => $fromAmounts,
             'available' => $available,
+            'labels' => $labels->labelsFor($onSale),
         ]);
     }
+
 
     #[Route('/events/{id}', name: 'booking_event', requirements: ['id' => '\\d+'], methods: ['GET'])]
     public function event(
@@ -107,23 +109,18 @@ class BookingController extends AbstractController
     public function show(
         #[MapEntity(id: 'eventId')] \App\Entity\Event $event,
         #[MapEntity(id: 'performanceId')] Performance $performance,
-        ReservationService $reservationService,
-        PerformancePriceRepository $prices,
-        TariffRepository $tariffs,
         BookingPolicyRepository $policies,
+        SeatMapViewBuilder $seatMapBuilder,
+        PerformanceLabelService $labels,
     ): Response {
         $this->assertPublished($performance, $event);
 
-        [$rows, $zoneColors, $zonePrices, $fromAmount, $availableCount, $totalCount, $zones] = $this->seatMap(
-            $performance,
-            $reservationService,
-            $prices,
-            $tariffs,
-        );
+        [$rows, $zoneColors, $zonePrices, $fromAmount, $availableCount, $totalCount, $zones] = $seatMapBuilder->build($performance, TariffCode::Full);
 
         return $this->render('booking/show.html.twig', [
             'event' => $event,
             'performance' => $performance,
+            'label' => $labels->labelFor($performance),
             'rows' => $rows,
             'zones' => $zones,
             'zoneColors' => $zoneColors,
@@ -211,7 +208,7 @@ class BookingController extends AbstractController
     }
 
     #[Route('/reservations', name: 'booking_reservations', methods: ['GET'])]
-    public function reservations(ReservationRepository $reservations): Response
+    public function reservations(ReservationRepository $reservations, PerformanceLabelService $labels): Response
     {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
@@ -219,8 +216,14 @@ class BookingController extends AbstractController
             throw new \LogicException('The user is not signed in.');
         }
 
+        $own = $reservations->findForUser($user);
+
         return $this->render('booking/reservations.html.twig', [
-            'reservations' => $reservations->findForUser($user),
+            'reservations' => $own,
+            'labels' => $labels->labelsFor(array_map(
+                static fn (Reservation $reservation): Performance => $reservation->getPerformance(),
+                $own,
+            )),
         ]);
     }
 
@@ -228,6 +231,7 @@ class BookingController extends AbstractController
     public function reservation(
         #[MapEntity(id: 'id')] Reservation $reservation,
         \App\Repository\TicketRepository $tickets,
+        PerformanceLabelService $labels,
     ): Response {
         $this->assertOwned($reservation);
 
@@ -239,6 +243,7 @@ class BookingController extends AbstractController
 
         return $this->render('booking/reservation.html.twig', [
             'reservation' => $reservation,
+            'label' => $labels->labelFor($reservation->getPerformance()),
             'tickets' => $ticketMap,
         ]);
     }
@@ -341,79 +346,4 @@ class BookingController extends AbstractController
         }
     }
 
-    /**
-     * Builds the seat map data for the template.
-     *
-     * @return array{0: array<string, list<array{inventoryPlace: \App\Entity\PerformancePlace, code: string, zoneId: int, status: InventoryStatus, price: string}>>, 1: array<int, int>, 2: array<int, string|null>, 3: string|null, 4: int, 5: int, 6: array<int, \App\Entity\LayoutZone>}
-     */
-    private function seatMap(
-        Performance $performance,
-        ReservationService $reservationService,
-        PerformancePriceRepository $prices,
-        TariffRepository $tariffs,
-    ): array {
-        $full = $tariffs->findOneBy(['code' => TariffCode::Full->value]);
-        $tariffId = null !== $full ? (int) $full->getId() : null;
-
-        $inventory = $reservationService->inventoryFor($performance);
-        $matrix = null !== $tariffId ? $prices->findCurrentMatrix($performance) : [];
-
-        $rows = [];
-        $zones = [];
-
-        foreach ($inventory as $entry) {
-            $layoutPlace = $entry['place']->getLayoutPlace();
-            $zones[(int) $entry['zone']->getId()] = $entry['zone'];
-        }
-
-        ksort($zones);
-
-        $zoneColors = [];
-
-        foreach (array_values($zones) as $index => $zone) {
-            $zoneColors[(int) $zone->getId()] = ($index % self::ZONE_COLORS) + 1;
-        }
-
-        $availableCount = 0;
-
-        foreach ($inventory as $entry) {
-            if (InventoryStatus::Available === $entry['status']) {
-                ++$availableCount;
-            }
-
-            $layoutPlace = $entry['place']->getLayoutPlace();
-            $zoneId = (int) $entry['zone']->getId();
-            $price = isset($matrix[$zoneId][$tariffId]) ? $matrix[$zoneId][$tariffId]->getAmount() : '0.00';
-            $rowLabel = $layoutPlace->getPlace()->getRowLabel() ?? '';
-
-            $rows[$rowLabel][] = [
-                'inventoryPlace' => $entry['place'],
-                'code' => $layoutPlace->getPlace()->getCode(),
-                'zoneId' => $zoneId,
-                'status' => $entry['status'],
-                'price' => $price,
-            ];
-        }
-
-        ksort($rows);
-
-        $zonePrices = [];
-
-        foreach ($zones as $zone) {
-            $zoneId = (int) $zone->getId();
-            $zonePrices[$zoneId] = isset($matrix[$zoneId][$tariffId]) ? $matrix[$zoneId][$tariffId]->getAmount() : null;
-        }
-
-        $fromAmount = null;
-
-        if ([] !== $zonePrices) {
-            $values = array_values(array_filter($zonePrices));
-
-            if ([] !== $values) {
-                $fromAmount = number_format(min(array_map('floatval', $values)), 2, '.', '');
-            }
-        }
-
-        return [$rows, $zoneColors, $zonePrices, $fromAmount, $availableCount, count($inventory), $zones];
-    }
 }

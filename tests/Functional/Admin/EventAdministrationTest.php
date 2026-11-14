@@ -40,7 +40,7 @@ class EventAdministrationTest extends FunctionalTestCase
         $crawler = $this->client->request('GET', '/admin/events');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('tbody', 'Soirée de gala');
+        self::assertSelectorTextContains('tbody', "Soirée d'ouverture");
     }
 
     public function test_an_administrator_creates_an_event(): void

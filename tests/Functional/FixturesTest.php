@@ -51,12 +51,12 @@ class FixturesTest extends FunctionalTestCase
         self::assertCount(400, $em->getRepository(LayoutPlace::class)->findAll(), 'Every seat is mapped exactly once (UK seating_layout_id + place_id).');
     }
 
-    public function test_fixtures_create_the_three_demo_accounts(): void
+    public function test_fixtures_create_the_demo_accounts(): void
     {
         $em = $this->entityManager();
         $users = $em->getRepository(User::class)->findBy([], ['email' => 'ASC']);
 
-        self::assertCount(3, $users);
+        self::assertCount(4, $users);
 
         $roles = [];
         foreach ($users as $user) {
@@ -68,8 +68,23 @@ class FixturesTest extends FunctionalTestCase
             array_values(array_intersect($roles[AppFixtures::USER_ADMIN_EMAIL], [User::ROLE_ADMIN])),
         );
         self::assertContains(User::ROLE_BOX_OFFICE, $roles[AppFixtures::USER_BOX_OFFICE_EMAIL]);
+        self::assertContains(User::ROLE_BOX_OFFICE, $roles[AppFixtures::USER_BOX_OFFICE_LIMITED_EMAIL]);
         self::assertContains(User::ROLE_CUSTOMER, $roles[AppFixtures::USER_CUSTOMER_EMAIL]);
         self::assertNotContains(User::ROLE_CUSTOMER, $roles[AppFixtures::USER_ADMIN_EMAIL], 'Roles are explicit, not cumulative.');
+    }
+
+    public function test_the_box_office_demo_account_has_both_tariff_permissions(): void
+    {
+        $em = $this->entityManager();
+        $boxOffice = $em->getRepository(User::class)->findOneBy(['email' => AppFixtures::USER_BOX_OFFICE_EMAIL]);
+        self::assertInstanceOf(User::class, $boxOffice);
+        self::assertTrue($boxOffice->canSellReducedTariff(), 'The demo box office may sell the reduced tariff.');
+        self::assertTrue($boxOffice->canSellInvitationTariff(), 'The demo box office may sell the invitation tariff.');
+
+        $limited = $em->getRepository(User::class)->findOneBy(['email' => AppFixtures::USER_BOX_OFFICE_LIMITED_EMAIL]);
+        self::assertInstanceOf(User::class, $limited);
+        self::assertFalse($limited->canSellReducedTariff(), 'The limited box office may not sell the reduced tariff.');
+        self::assertFalse($limited->canSellInvitationTariff(), 'The limited box office may not sell the invitation tariff.');
     }
 
     public function test_demo_passwords_are_properly_hashed(): void

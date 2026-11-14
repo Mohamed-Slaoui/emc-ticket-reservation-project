@@ -1,0 +1,114 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}Reservation {{ reservation.reference }}{% endblock %}
+
+{% block content %}
+    {% set status = reservation.status.value %}
+
+    {% include '_components/page_header.html.twig' with {
+        title: 'Reservation ' ~ reservation.reference,
+        subtitle: label ~ ' · ' ~ reservation.performance.startsAt|date('d/m/Y H:i'),
+        action_label: 'Back to the counter',
+        action_path: path('box_office_index'),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    {% include '_components/flash.html.twig' %}
+
+    <div class="card card--flat">
+        <div class="card__body">
+            <div class="booking__summary u-flex u-gap-3" style="margin-bottom: var(--space-5);">
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Status</div>
+                    <div class="table__identity-name">
+                        {% if status == 'HELD' %}
+                            <span class="badge badge--warning">Held until {{ reservation.expiresAt|date('H:i') }}</span>
+                        {% elseif status == 'CONFIRMED' %}
+                            <span class="badge badge--success">Confirmed</span>
+                        {% elseif status == 'EXPIRED' %}
+                            <span class="badge">Expired</span>
+                        {% else %}
+                            <span class="badge badge--danger">Cancelled</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Payment</div>
+                    <div class="table__identity-name">{{ reservation.channel.value == 'ONLINE' ? 'Online' : 'Box office' }}</div>
+                </div>
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Customer</div>
+                    <div class="table__identity-name">{{ reservation.customer ? reservation.customer.firstName ~ ' ' ~ reservation.customer.lastName : 'Anonymous sale' }}</div>
+                </div>
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Total</div>
+                    <div class="table__identity-name u-mono">{{ reservation.totalAmount }} {{ reservation.currency }}</div>
+                </div>
+                <div class="table__identity-text">
+                    <div class="table__identity-mail">Seats</div>
+                    <div class="table__identity-name">{{ reservation.items|length }}</div>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Zone</th>
+                            <th>Seat</th>
+                            <th>Tariff</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in reservation.items %}
+                            <tr>
+                                <td>{{ item.performancePlace.layoutPlace.layoutZone.name }}</td>
+                                <td class="u-mono">{{ item.performancePlace.layoutPlace.place.code }}</td>
+                                <td>{{ item.tariffNameSnapshot }}</td>
+                                <td class="u-mono">{{ item.unitPriceSnapshot }} {{ item.currencySnapshot }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if tickets is not empty %}
+                <h2 class="table__identity-name" style="margin: var(--space-5) 0 var(--space-3);">Tickets</h2>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Seat</th>
+                                <th>Status</th>
+                                <th>Claim code</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets %}
+                                <tr>
+                                    <td class="u-mono">{{ ticket.ticketNumber }}</td>
+                                    <td class="u-mono">{{ ticket.reservationItem.performancePlace.layoutPlace.place.code }}</td>
+                                    <td>{{ ticket.status.value == 'VALID' ? 'Valid' : (ticket.status.value == 'USED' ? 'Used' : 'Void') }}</td>
+                                    <td><span class="u-mono u-small">{{ ticket.qrToken }}</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="u-muted u-small" style="margin-top: var(--space-4);">No ticket yet — payment is pending or the reservation is not confirmed.</p>
+            {% endif %}
+
+            {% if status == 'CONFIRMED' %}
+                <div class="form__actions" style="margin-top: var(--space-5);">
+                    <button type="button" class="button button--ghost" onclick="window.print()">{{ icon('printer', 'icon icon--sm') }} Print the tickets</button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

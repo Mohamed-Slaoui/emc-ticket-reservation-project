@@ -1,0 +1,84 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}Reservations{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: 'Reservations',
+        subtitle: 'Find a sale by reference or by customer email.',
+    } %}
+
+    <form method="get" class="list-toolbar" data-turbo="false">
+        <div class="search" style="max-width: 26rem;">
+            <span class="search__icon">{{ icon('search', 'icon icon--sm') }}</span>
+            <input class="search__input" type="search" name="q" value="{{ q }}" placeholder="RES-… or customer email…" aria-label="Search">
+        </div>
+        <button type="submit" class="button button--secondary">Search</button>
+        {% if q %}
+            <a class="button button--ghost" href="{{ path('box_office_reservations') }}">Clear</a>
+        {% endif %}
+    </form>
+
+    {% set body %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Show</th>
+                        <th>Customer</th>
+                        <th>Seats</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Channel</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if reservations is empty %}
+                        <tr>
+                            <td colspan="8" class="u-muted" style="text-align:center; padding: var(--space-6);">No reservation found{% if q %} for « {{ q }} »{% endif %}.</td>
+                        </tr>
+                    {% endif %}
+                    {% for reservation in reservations %}
+                        {% set status = reservation.status.value %}
+                        <tr>
+                            <td class="u-mono u-nowrap">{{ reservation.reference }}</td>
+                            <td>
+                                <div class="table__identity-text">
+                                    <div class="table__identity-name">{{ labels[reservation.performance.id]|default(reservation.performance.event.title) }}</div>
+                                    <div class="table__identity-mail u-mono">{{ reservation.performance.startsAt|date('d/m/Y H:i') }}</div>
+                                </div>
+                            </td>
+                            <td>{{ reservation.customer ? reservation.customer.firstName ~ ' ' ~ reservation.customer.lastName ~ ' (' ~ reservation.customer.email ~ ')' : 'Anonymous sale' }}</td>
+                            <td>{{ reservation.items|length }}</td>
+                            <td class="u-mono">{{ reservation.totalAmount }} {{ reservation.currency }}</td>
+                            <td>
+                                {% if status == 'HELD' %}
+                                    <span class="badge badge--warning">Held</span>
+                                {% elseif status == 'CONFIRMED' %}
+                                    <span class="badge badge--success">Confirmed</span>
+                                {% elseif status == 'EXPIRED' %}
+                                    <span class="badge">Expired</span>
+                                {% else %}
+                                    <span class="badge badge--danger">Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ reservation.channel.value == 'ONLINE' ? 'Online' : 'Box office' }}</td>
+                            <td class="table__cell--actions">
+                                <a class="button button--ghost button--icon" href="{{ path('box_office_reservation', {id: reservation.id}) }}"
+                                   title="Open" aria-label="Open the reservation {{ reservation.reference }}">
+                                    {{ icon('eye', 'icon icon--sm') }}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endset %}
+
+    {% include '_components/card.html.twig' with { variant: 'card--flat', body: body } %}
+{% endblock %}

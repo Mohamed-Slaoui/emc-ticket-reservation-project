@@ -37,6 +37,10 @@ use Doctrine\ORM\EntityManagerInterface;
  * - INV-03 — a reservation cannot be confirmed after its expiry.
  * - INV-09 / Q5 — the online channel sells the full tariff only; the other
  *   tariffs go through the box office or an administrator.
+ * - BR-11 / Q5 — the reduced tariff is sold only by a seller the administrator
+ *   has authorized for it, and only after verifying the supporting document
+ *   in person. The invitation tariff likewise belongs to the sellers the
+ *   administrator authorizes.
  * - BR-12 — the group tariff needs at least 5 seats, all at the group rate.
  * - BR-05 — a hold that expires without payment releases its seats.
  *
@@ -113,15 +117,33 @@ class ReservationService
         ?User $customer = null,
         bool $eligibilityVerified = false,
     ): Reservation {
-        // The channel authorisation (WF-2.1 / Q5): the online channel sells
-        // the full tariff only. The other tariffs are authorised at the
-        // counter, where the document is verified in presence.
+        $isAdministrator = $createdBy->hasRole(\App\Entity\User::ROLE_ADMIN);
+
+        // These authorizations are checked server-side, exactly as the
+        // seller asked for them, and a compromised form cannot bypass them.
         if (SalesChannel::Online === $channel && TariffCode::Full !== $tariffCode) {
             throw new TariffNotAuthorizedException('Only the full tariff is sold online. Reduced, group and invitation tariffs are sold at the counter (Q5).');
         }
 
-        if (SalesChannel::BoxOffice === $channel && TariffCode::Reduced === $tariffCode && !$eligibilityVerified) {
-            throw new TariffNotAuthorizedException('The reduced tariff requires the supporting document to be verified in person, at the counter (Q5).');
+        // The reduced tariff is reserved at the counter to the sellers the
+        // administrator has authorized for it — and the document must be
+        // verified for this sale. An administrator sells every tariff.
+        if (SalesChannel::BoxOffice === $channel && TariffCode::Reduced === $tariffCode) {
+            if (!$isAdministrator && !$createdBy->canSellReducedTariff()) {
+                throw new TariffNotAuthorizedException('The seller is not authorized to sell the reduced tariff.');
+            }
+
+            if (!$eligibilityVerified) {
+                throw new TariffNotAuthorizedException('The reduced tariff requires the supporting document to be verified in person, at the counter (Q5).');
+            }
+        }
+
+        // The invitation tariff has no automatic association with role or
+        // sale: it is sold only by a seller authorized by the administrator.
+        if (SalesChannel::BoxOffice === $channel && TariffCode::Invitation === $tariffCode) {
+            if (!$isAdministrator && !$createdBy->canSellInvitationTariff()) {
+                throw new TariffNotAuthorizedException('The seller is not authorized to sell the invitation tariff.');
+            }
         }
 
         return $this->entityManager->wrapInTransaction(

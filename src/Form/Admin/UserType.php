@@ -65,6 +65,16 @@ class UserType extends AbstractType
                 'required' => true,
                 'help' => 'The roles are cumulative: the administrator can do everything the box office and the customer can.',
             ])
+            ->add('canSellReducedTariff', CheckboxType::class, [
+                'label' => 'Can sell the reduced tariff',
+                'required' => false,
+                'help' => 'The seller may apply the reduced tariff at the counter when the customer is able to present a supporting document, which the seller verifies in person.',
+            ])
+            ->add('canSellInvitationTariff', CheckboxType::class, [
+                'label' => 'Can sell the invitation tariff',
+                'required' => false,
+                'help' => 'The seller may apply the invitation tariff — BR-11. Without this authorization the invitation option is not offered, even to a box-office account.',
+            ])
             ->add('isActive', CheckboxType::class, [
                 'label' => 'The account is enabled',
                 'required' => false,

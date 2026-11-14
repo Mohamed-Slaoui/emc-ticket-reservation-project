@@ -17,7 +17,7 @@
     {% include '_components/flash.html.twig' %}
 
     {% set form %}
-        {{ form_start(form, {attr: {class: 'form'}}) }}
+        {{ form_start(form, {attr: {class: 'form', 'data-controller': 'tariff-permissions'}}) }}
 
             <div class="form__grid">
                 {{ form_row(form.firstName) }}
@@ -35,8 +35,17 @@
                 {{ form_row(form.isActive) }}
             </div>
 
-
             {{ form_row(form.role) }}
+
+            <fieldset class="tariff-permissions" data-tariff-permissions-target="section" hidden>
+                <legend class="form__label">Tariff permissions</legend>
+                <p class="u-muted u-small" style="margin-bottom: var(--space-2);">
+                    Only for the box office — an administrator already sells every tariff, and a customer sells none.
+                </p>
+                {{ form_row(form.canSellReducedTariff) }}
+                <div class="u-mb-2"></div>
+                {{ form_row(form.canSellInvitationTariff) }}
+            </fieldset>
 
             <div class="form__actions">
                 <button type="submit" class="button button--primary">

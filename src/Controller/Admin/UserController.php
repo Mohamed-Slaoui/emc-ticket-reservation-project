@@ -62,6 +62,8 @@ class UserController extends AbstractController
                 $data->lastName,
                 [$data->role],
                 $data->phone,
+                $data->canSellReducedTariff,
+                $data->canSellInvitationTariff,
             );
 
             $this->addFlash('success', 'The account has been created.');
@@ -86,6 +88,8 @@ class UserController extends AbstractController
         $data->lastName = $user->getLastName();
         $data->phone = $user->getPhone();
         $data->role = $user->getBusinessRoles()[0] ?? User::ROLE_CUSTOMER;
+        $data->canSellReducedTariff = $user->canSellReducedTariff();
+        $data->canSellInvitationTariff = $user->canSellInvitationTariff();
         $data->isActive = $user->isActive();
 
         $form = $this->createForm(UserType::class, $data);
@@ -101,6 +105,8 @@ class UserController extends AbstractController
                 $data->lastName,
                 [$data->role],
                 $data->phone,
+                $data->canSellReducedTariff,
+                $data->canSellInvitationTariff,
             );
             $userService->setActive($user, $data->isActive);
 

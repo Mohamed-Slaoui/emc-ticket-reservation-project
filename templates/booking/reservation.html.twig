@@ -9,7 +9,7 @@
 
     {% include '_components/page_header.html.twig' with {
         title: 'Reservation ' ~ reservation.reference,
-        subtitle: reservation.performance.event.title ~ ' · ' ~ reservation.performance.startsAt|date('d/m/Y H:i') ~ ' · ' ~ reservation.performance.seatingLayout.room.venue.name,
+        subtitle: label ~ ' · ' ~ reservation.performance.startsAt|date('d/m/Y H:i') ~ ' · ' ~ reservation.performance.seatingLayout.room.venue.name,
         action_label: 'My reservations',
         action_path: path('booking_reservations'),
         action_icon: 'arrow-left',

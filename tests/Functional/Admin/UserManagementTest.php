@@ -36,7 +36,7 @@ class UserManagementTest extends FunctionalTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('tbody', AppFixtures::USER_ADMIN_EMAIL);
         self::assertSelectorTextContains('tbody', AppFixtures::USER_CUSTOMER_EMAIL);
-        self::assertCount(3, $crawler->filter('tbody tr'));
+        self::assertCount(4, $crawler->filter('tbody tr'));
     }
 
     public function test_the_list_can_be_searched(): void
@@ -62,6 +62,8 @@ class UserManagementTest extends FunctionalTestCase
             'admin_user[lastName]' => 'Bennani',
             'admin_user[phone]' => '+212 600 00 00 00',
             'admin_user[role]' => 'ROLE_BOX_OFFICE',
+            'admin_user[canSellReducedTariff]' => '1',
+            'admin_user[canSellInvitationTariff]' => '1',
             'admin_user[plainPassword]' => 'a-very-secret-password',
         ]);
 
@@ -75,6 +77,8 @@ class UserManagementTest extends FunctionalTestCase
         self::assertNotNull($created);
         self::assertSame('Nadia', $created->getFirstName());
         self::assertTrue($created->hasRole('ROLE_BOX_OFFICE'));
+        self::assertTrue($created->canSellReducedTariff());
+        self::assertTrue($created->canSellInvitationTariff());
         self::assertNotSame('a-very-secret-password', $created->getPassword(), 'The password is stored hashed.');
     }
 
