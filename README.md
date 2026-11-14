@@ -394,7 +394,7 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 7 | Reservation foundation | **Review required** |
 | 8 | Customer booking | **Review required** |
 | 9 | Box-office sales | **Review required** |
-| 10 | Online payments | Pending |
+| 10 | Online payments | **Review required** |
 | 11 | Tickets and entry | Pending |
 | 12 | Administrative controls | Pending |
 | 13 | Reporting | Pending |
@@ -441,10 +441,13 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 - **The public ticket office** — separated from the administration. `/` is the programme of
   published shows (public: no account to browse); the event page lists the performances; the
   seat map shows availability; pick seats → hold them → pay for them. The whole reservation
-  expires by itself if unpaid. The online payment is simulated (per `docs/DECISIONS.md`
-  A1) — and paying confirms the reservation, issues one ticket per seat and delivers the
-  tickets on the confirmation page. Administrators use the same shop (they keep full, group
-  and invitation tariffs, as well as the reduced one); the reduced tariff is sold at the counter. The administration
+  expires by itself if unpaid. The payment goes through a `PaymentProvider` — simulated
+  (per `docs/DECISIONS.md` A1; a real provider plugs into the same place) — and paying
+  confirms the reservation, issues one ticket per seat and delivers the tickets on the
+  confirmation page. A refused payment keeps the seats held until the expiry (the customer
+  may retry); a payment that arrives too late is refunded in full and issues no ticket.
+  Administrators use the same shop (they keep full, group and invitation tariffs, as well as
+  the reduced one); the reduced tariff is sold at the counter. The administration
   also gets a read-only reservations screen (`/admin/reservations`).
 - **The box office** — `/box-office`: search the on-sale shows, open the same seat map the
   customer sees, choose the tariff the seller is authorized to apply (full and group for
@@ -458,9 +461,9 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 
 **What comes next**
 
-Phase 10 wires the online payment to a real provider — until now it is simulated,
-per `docs/DECISIONS.md` A1. A real provider would plug into `PaymentService` with the same
-confirm-payment-issue-tickets transaction.
+Phase 11 finishes the tickets: the scannable QR image (the `endroid/qr-code`
+package, once this machine can reach Packagist), the printable ticket and the
+entry validation — the scan that redeems a ticket, single use (INV-07).
 
 ## 18. Known limitations and MVP boundaries
 

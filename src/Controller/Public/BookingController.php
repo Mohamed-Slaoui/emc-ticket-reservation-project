@@ -268,18 +268,31 @@ class BookingController extends AbstractController
             return $this->redirectToRoute('booking_reservation', ['id' => $reservation->getId()]);
         }
 
-        if ($reservation->isExpired()) {
-            $this->addFlash('warning', 'This hold has expired — the seats are back on sale.');
+        // The payment goes through the provider — the three outcomes of
+        // docs/WORKFLOWS.md WF-1 §2.3.
+        $outcome = $paymentService->pay($reservation, [
+            'cardHolder' => (string) $request->request->get('cardHolder', ''),
+            'cardNumber' => (string) $request->request->get('cardNumber', ''),
+            'cardExpiry' => (string) $request->request->get('cardExpiry', ''),
+            'cardCvc' => (string) $request->request->get('cardCvc', ''),
+        ]);
+
+        if (!$outcome->approved) {
+            // BR-05 — the seats stay held until the hold expires; the
+            // customer may try again.
+            $this->addFlash('warning', $outcome->message.' Your seats stay held until the expiry — you can try again.');
 
             return $this->redirectToRoute('booking_reservation', ['id' => $reservation->getId()]);
         }
 
-        try {
-            $paymentService->complete($reservation);
-            $this->addFlash('success', 'Payment received. Your tickets are available below.');
-        } catch (\LogicException) {
-            $this->addFlash('warning', 'This hold can no longer be paid — it has expired.');
+        if (ReservationStatus::Confirmed !== $reservation->getStatus()) {
+            // BR-06 — a late payment is refunded in full and issues no ticket.
+            $this->addFlash('warning', $outcome->message);
+
+            return $this->redirectToRoute('booking_reservation', ['id' => $reservation->getId()]);
         }
+
+        $this->addFlash('success', 'Payment received. Your tickets are available below.');
 
         return $this->redirectToRoute('booking_reservation', ['id' => $reservation->getId()]);
     }

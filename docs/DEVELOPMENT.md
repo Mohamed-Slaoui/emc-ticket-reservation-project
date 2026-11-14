@@ -395,7 +395,24 @@ against a supporting document).
 | "Search reservations": find a sale by reference or by customer email. | `BoxOfficeController::reservations()` + `ReservationRepository::searchForStaff()` |
 | The sidebar shows "Box office" for `ROLE_BOX_OFFICE`, and "Book tickets" for everyone. | `templates/_partials/sidebar.html.twig` |
 
-### 4.10 The cascading deletions
+### 4.11 The payments
+
+An online payment goes through a **`PaymentProvider`** — the only door to the
+outside world for a payment. The MVP ships the simulated one (no provider is
+imposed — docs/DECISIONS.md A1); a real provider replaces one service alias.
+The counter takes the money directly: cash or card terminal, no provider.
+
+| Rule | Where |
+|---|---|
+| The card details are **read, never stored** — they authorize the payment and disappear. | `PaymentService::pay()` |
+| The three outcomes of the workflow (docs/WORKFLOWS.md WF-1 §2.3) are enforced server-side. | `PaymentService::pay()` |
+| **Approved before the expiry** — the reservation is confirmed (INV-03), the seats are SOLD, the payment is captured, one ticket per item (INV-06) and one outbox message per ticket. | `PaymentService::pay()` + `issueTickets()` |
+| **Refused** — the attempt is recorded as FAILED and the reservation **stays held**: the seats are released at the expiry, not before (BR-05). The customer may retry. | `PaymentService::pay()` |
+| **Approved after the expiry** — the capture is recorded, refunded **in full**, and **no ticket is issued** (BR-06). | `PaymentService::pay()` |
+| The refund cap is enforced in memory: a refund may never exceed the captured amount. | `Payment::addRefund()` |
+| The simulated provider approves every card but the test ones (a number ending in `0000` is refused). | `SimulatedPaymentProvider` |
+
+### 4.12 The cascading deletions
 
 The foreign keys are strict, so a deletion removes **what it holds**, in this order:
 
@@ -417,7 +434,7 @@ The seat map is a **plain form**, not a Symfony form: it holds one checkbox per 
 room — four hundred of them — and the browser sends the checked seats. The zone colours
 come from the token file and follow the position of the zone in the configuration.
 
-### 4.11 Documentation
+### 4.13 Documentation
 
 - `README.md` is a **living document**: it is updated in the same phase as any feature,
   dependency, command, integration or setup requirement it introduces.
@@ -445,7 +462,7 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 7 | Inventory availability and reservation foundation | **Completed** |
 | 8 | Customer booking experience | **Review required** |
 | 9 | Box-office sales | **Review required** |
-| 10 | Online payment integration | Pending — a **simulated** payment was delivered in Phase 8 (docs/DECISIONS.md A1); a real provider would plug in here |
+| 10 | Online payment integration | **Review required** — the payment goes through a `PaymentProvider` (simulated, docs/DECISIONS.md A1) with the three outcomes of WF-1 §2.3; a real provider plugs into the same alias |
 | 11 | Ticket issuance and entry validation | Pending — **tickets are issued at payment** (one per item); the QR image and the entry scanner remain |
 | 12 | Administrator reservation and performance management | Pending |
 | 13 | Reporting and dashboards | Pending |

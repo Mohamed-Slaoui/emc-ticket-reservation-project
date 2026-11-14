@@ -164,6 +164,33 @@ The five questions from the specification, with the chosen answer and its justif
   sign-up form issues a customer account and signs nothing up until it is valid; a guest that
   is already signed in is redirected to the shop.
 
+### 2026-11-14 - The online payment, with its three outcomes
+
+- **Question:** the shop took the money without ever speaking to a payment
+  provider. What does the online payment really do?
+- **Decision:** the payment goes through a **`PaymentProvider`** — the only door to
+  the outside world for a payment. The MVP ships the **simulated** provider
+  (docs/DECISIONS.md A1 — no provider is imposed); a real one replaces a single
+  service alias, and nothing else moves. The simulator approves every card but
+  the test cards: a number ending in `0000` is refused.
+- **Decision:** the three outcomes of the workflow (docs/WORKFLOWS.md WF-1 §2.3)
+  are now real, and each of them is enforced **server-side**:
+  - **approved before the expiry** — the reservation is confirmed, the seats are
+    SOLD, the payment is captured, one ticket is issued per item and one
+    **outbox message** per ticket is written (the Sheets synchronisation picks
+    them up in Phase 14);
+  - **refused** — the attempt is recorded as FAILED and the reservation **stays
+    held**: the seats are not released before the hold expires (BR-05), and the
+    customer may try again;
+  - **approved after the expiry** — the capture is recorded, it is **refunded in
+    full**, and **no ticket is issued** (BR-06).
+- **Decision:** the card details are read, never stored — they authorize the
+  payment and disappear. The counter is unchanged: cash and card terminal take
+  the money directly, with no provider.
+- **Impact:** the payment page of a reservation asks for the card details and
+  explains the simulation; the three outcomes are covered by
+  `tests/Functional/PaymentTest.php`.
+
 ### 2026-11-14 - The demo fixtures grow into a rich dataset (dev only)
 
 - **Problem:** the development fixtures were deterministic but minimal — one venue,
@@ -392,4 +419,5 @@ These points are **excluded** from the first version to guarantee a solid delive
 | Self sign-up of the ticket office; the site is branded EMC Ticketing | 2026-11-14 | Section 1 — the 2026-11-14 entry |
 | Box-office tariff permissions (per-account, admin-granted; admin sells everything) | 2026-11-14 | Section 1 — the 2026-11-14 entry |
 | Rich demo dataset in development only (two venues, four rooms, every show status) | 2026-11-14 | Section 1 — the 2026-11-14 entry |
+| The online payment through a provider (simulated), with its three outcomes | 2026-11-14 | Section 1 — the 2026-11-14 entry |
 | Approved business workflows | 2026-11-10 | [`WORKFLOWS.md`](WORKFLOWS.md) |

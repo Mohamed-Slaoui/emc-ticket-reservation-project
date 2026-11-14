@@ -90,15 +90,46 @@
                             Cancel this hold
                         </button>
                     </form>
+                </div>
 
-                    <form method="post" action="{{ path('booking_pay', {id: reservation.id}) }}">
-                        <input type="hidden" name="_token" value="{{ csrf_token('pay_' ~ reservation.id) }}">
-                        <button type="submit" class="button button--primary" title="Simulated payment — the reservation is confirmed and the tickets are issued">
+                {# The online payment — simulated (docs/DECISIONS.md A1). The
+                   details are never stored: the provider only authorizes. #}
+                <form method="post" action="{{ path('booking_pay', {id: reservation.id}) }}" class="form" data-turbo="false">
+                    <input type="hidden" name="_token" value="{{ csrf_token('pay_' ~ reservation.id) }}">
+
+                    <h2 class="table__identity-name" style="margin: var(--space-5) 0 var(--space-3);">Payment</h2>
+
+                    <div class="form__grid">
+                        <div class="form__group">
+                            <label class="form__label" for="cardHolder">Card holder</label>
+                            <input class="form__control" type="text" id="cardHolder" name="cardHolder" autocomplete="cc-name" required>
+                        </div>
+                        <div class="form__group">
+                            <label class="form__label" for="cardNumber">Card number</label>
+                            <input class="form__control" type="text" id="cardNumber" name="cardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242" max="16" required>
+                        </div>
+                        <div class="form__group">
+                            <label class="form__label" for="cardExpiry">Expiry</label>
+                            <input class="form__control" type="text" id="cardExpiry" name="cardExpiry" autocomplete="cc-exp" placeholder="12/28" required>
+                        </div>
+                        <div class="form__group">
+                            <label class="form__label" for="cardCvc">Security code</label>
+                            <input class="form__control" type="text" id="cardCvc" name="cardCvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" required>
+                        </div>
+                    </div>
+
+                    <div class="form__actions" style="justify-content: flex-end;">
+                        <button type="submit" class="button button--primary"
+                                title="Simulated payment — the reservation is confirmed and the tickets are issued">
                             {{ icon('ticket', 'icon icon--sm') }}
                             Pay {{ reservation.totalAmount }} {{ reservation.currency }}
                         </button>
-                    </form>
-                </div>
+                    </div>
+
+                    <p class="u-muted u-small" style="margin-top: var(--space-3);">
+                        The payment is simulated: any card number is accepted, a number ending in 0000 is refused.
+                    </p>
+                </form>
             {% endif %}
         </div>
     </div>

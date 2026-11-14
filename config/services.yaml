@@ -27,5 +27,10 @@ services:
             $classOrAlias: 'App\Entity\User'
             $property: 'email'
 
+    # The payment provider is the only door to the outside world for a
+    # payment. No online provider is imposed (docs/DECISIONS.md A1): the MVP
+    # ships the simulated one. A real provider replaces this alias only.
+    App\Service\Payment\PaymentProvider: '@App\Service\Payment\SimulatedPaymentProvider'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

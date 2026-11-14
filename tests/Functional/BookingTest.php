@@ -289,13 +289,19 @@ class BookingTest extends FunctionalTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
-    private function payReservation(Reservation $reservation): void
+    private function payReservation(Reservation $reservation, string $cardNumber = '4242 4242 4242 4242'): void
     {
         $this->client->request('GET', '/reservations/'.$reservation->getId());
         $token = $this->client->getCrawler()->filter('form[action$="/pay"] input[name="_token"]')->attr('value');
         self::assertIsString($token);
 
-        $this->client->request('POST', '/reservations/'.$reservation->getId().'/pay', ['_token' => $token]);
+        $this->client->request('POST', '/reservations/'.$reservation->getId().'/pay', [
+            '_token' => $token,
+            'cardHolder' => 'Karim Ouazzani',
+            'cardNumber' => $cardNumber,
+            'cardExpiry' => '12/28',
+            'cardCvc' => '123',
+        ]);
         $this->client->followRedirect();
     }
 }
