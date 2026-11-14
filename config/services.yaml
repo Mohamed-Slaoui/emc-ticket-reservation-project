@@ -32,5 +32,10 @@ services:
     # ships the simulated one. A real provider replaces this alias only.
     App\Service\Payment\PaymentProvider: '@App\Service\Payment\SimulatedPaymentProvider'
 
+    # Google Sheets is the only door to the spreadsheet for the outbox worker.
+    # The MVP ships the simulated one (no credentials required); a real client
+    # (google/apiclient) replaces this alias only (docs/WORKFLOWS.md §7.3).
+    App\Service\Integration\GoogleSheetsClient: '@App\Service\Integration\SimulatedGoogleSheetsClient'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

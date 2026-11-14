@@ -282,6 +282,19 @@ The five questions from the specification, with the chosen answer and its justif
   and all tariff write paths were removed. A fifth category is a deliberate, reviewed change
   (code + migration) — never something the interface can do.
 
+### 2026-11-14 - The outbox worker drains to Google Sheets
+
+- **Decision:** the outbox worker is a synchronous console command (`app:outbox:process`)
+  run by the scheduler, not a Symfony Messenger consumer. The `MESSENGER_TRANSPORT_DSN`
+  stays configured for future use, but the drain is explicit and idempotent.
+- **Decision:** Google Sheets access goes through a `GoogleSheetsClient` interface with a
+  simulated implementation (no credentials required). A real client (google/apiclient)
+  replaces the alias in `config/services.yaml` only.
+- **Decision:** each message is claimed atomically (`PENDING → PROCESSING`), sent, then
+  marked `SENT`; on failure it is marked `FAILED` with a 30-second backoff and retried
+  later. A Google Sheets outage therefore never blocks or cancels a sale (INV-12).
+- **Decision:** the scheduler also runs `app:holds:expire` every minute to release unpaid
+  holds (BR-05).
 ### Q5. Who is allowed to sell which tariff?
 
 > **Answer: Rights depend on the tariff and the role. The online channel is reserved for the full tariff; reduced, group, and invitation tariffs go through the box office or an admin.**

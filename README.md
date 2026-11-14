@@ -342,11 +342,13 @@ The Google Sheets synchronisation runs out of band, through a Symfony Messenger 
 that drains the transactional outbox.
 
 ```bash
-php bin/console messenger:consume async
+php bin/console app:outbox:process
+php bin/console app:holds:expire
 ```
 
-The worker is safe to run concurrently: each message is claimed atomically and the
-idempotency key prevents duplicate rows in Google Sheets.
+The outbox worker is safe to run concurrently: each message is claimed atomically
+and the idempotency key prevents duplicate rows in Google Sheets. Run it every
+minute (alongside `app:holds:expire`) from the scheduler.
 
 > **Current state (Phase 0).** The Messenger transport is configured and the
 > `messenger_messages` table is created by the migrations, but the outbox itself arrives
@@ -398,7 +400,7 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 11 | Tickets and entry | Pending |
 | 12 | Administrative controls | Pending |
 | 13 | Reporting | Pending |
-| 14 | Google Sheets | Pending |
+| 14 | Google Sheets | **Completed** |
 | 15 | Hardening and security | Pending |
 | 16 | Docker and deployment | Pending |
 | 17 | Final delivery | Pending |

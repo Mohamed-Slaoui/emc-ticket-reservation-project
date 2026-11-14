@@ -4,7 +4,7 @@
 |---|---|
 | **Project** | Performance Venue Ticketing — PFE Challenge EMC 2026 |
 | **Subject** | Subject 1 of 4 — Billetterie d'une salle de spectacle |
-| **Phase** | 8 — Customer booking experience |
+| **Phase** | 14 — Google Sheets integration |
 | **Last updated** | 2026-11-14 |
 | **Related documents** | [`docs/MODELE.md`](MODELE.md) · [`docs/DECISIONS.md`](DECISIONS.md) · [`docs/WORKFLOWS.md`](WORKFLOWS.md) · [`README.md`](../README.md) |
 
@@ -466,7 +466,7 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 11 | Ticket issuance and entry validation | Pending — **tickets are issued at payment** (one per item); the QR image and the entry scanner remain |
 | 12 | Administrator reservation and performance management | Pending |
 | 13 | Reporting and dashboards | Pending |
-| 14 | Google Sheets integration | Pending |
+| 14 | Google Sheets integration | **Completed** |
 | 15 | Hardening, quality and security | Pending |
 | 16 | Docker and deployment preparation | Pending |
 | 17 | Final documentation and delivery | Pending |
