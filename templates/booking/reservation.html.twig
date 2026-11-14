@@ -131,6 +131,14 @@
                     </p>
                 </form>
             {% endif %}
+            {% if tickets is not empty %}
+                <div class="form__actions" style="margin-top: var(--space-5);">
+                    <a class="button button--primary" href="{{ path('booking_tickets', {id: reservation.id}) }}">
+                        {{ icon('printer', 'icon icon--sm') }}
+                        Print the tickets
+                    </a>
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

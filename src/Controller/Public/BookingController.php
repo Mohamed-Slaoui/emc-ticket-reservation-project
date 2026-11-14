@@ -297,6 +297,25 @@ class BookingController extends AbstractController
         return $this->redirectToRoute('booking_reservation', ['id' => $reservation->getId()]);
     }
 
+    #[Route('/reservations/{id}/tickets', name: 'booking_tickets', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    public function tickets(
+        #[MapEntity(id: 'id')] Reservation $reservation,
+        \App\Repository\TicketRepository $tickets,
+    ): Response {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+        // The holder prints their tickets; the counter prints them for a
+        // customer standing at the desk.
+        if (!$this->isOwner($reservation) && !$this->isGranted('ROLE_BOX_OFFICE')) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $this->render('booking/tickets.html.twig', [
+            'reservation' => $reservation,
+            'tickets' => $tickets->findForReservation($reservation),
+        ]);
+    }
+
     #[Route('/reservations/{id}/cancel', name: 'booking_cancel', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function cancel(
         Request $request,
@@ -345,18 +364,26 @@ class BookingController extends AbstractController
      */
     private function assertOwned(Reservation $reservation): void
     {
+        if (!$this->isOwner($reservation)) {
+            throw $this->createAccessDeniedException();
+        }
+    }
+
+    /**
+     * Whether the signed-in account is the buyer of the reservation.
+     */
+    private function isOwner(Reservation $reservation): bool
+    {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
         if (!$user instanceof \App\Entity\User) {
-            throw new \LogicException('The user is not signed in.');
+            return false;
         }
 
         $isCustomer = null !== $reservation->getCustomer() && $reservation->getCustomer()->getId() === $user->getId();
         $isAuthor = $reservation->getCreatedBy()->getId() === $user->getId();
 
-        if (!$isCustomer && !$isAuthor) {
-            throw $this->createAccessDeniedException();
-        }
+        return $isCustomer || $isAuthor;
     }
 
 }

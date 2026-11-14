@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}Entry{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: 'Entry',
+        subtitle: 'Read a ticket to admit its holder — a ticket is used only once.',
+    } %}
+
+    {% if message %}
+        <div class="alert alert--{{ admitted ? 'success' : 'danger' }}" role="alert">
+            <span class="alert__icon">{{ icon(admitted ? 'check' : 'alert', 'icon icon--sm') }}</span>
+            <div class="alert__body">{{ message }}</div>
+        </div>
+    {% endif %}
+
+    <div class="card card--flat">
+        <div class="card__body">
+            <form method="post" action="{{ path('box_office_entry') }}" class="form" data-turbo="false">
+                <div class="form__group">
+                    <label class="form__label" for="code">Ticket number or claim code</label>
+                    <input class="form__control" type="text" id="code" name="code" value="{{ code }}"
+                           placeholder="TKT-261114-XXXXXXXXXX" autocomplete="off" autofocus required>
+                </div>
+
+                <div class="form__actions">
+                    <button type="submit" class="button button--primary">
+                        {{ icon('scan', 'icon icon--sm') }}
+                        Read the ticket
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if ticket %}
+        <div class="card card--flat" style="margin-top: var(--space-4);">
+            <div class="card__body">
+                <h2 class="table__identity-name" style="margin-bottom: var(--space-3);">The ticket</h2>
+
+                <div class="table-wrap">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>Event</td>
+                                <td>{{ ticket.reservationItem.reservation.performance.event.title }}</td>
+                            </tr>
+                            <tr>
+                                <td>Show</td>
+                                <td>{{ ticket.reservationItem.reservation.performance.startsAt|date('d/m/Y H:i') }} — {{ ticket.reservationItem.reservation.performance.seatingLayout.room.venue.name }}</td>
+                            </tr>
+                            <tr>
+                                <td>Seat</td>
+                                <td class="u-mono">{{ ticket.reservationItem.performancePlace.layoutPlace.place.code }} ({{ ticket.reservationItem.performancePlace.layoutPlace.layoutZone.name }})</td>
+                            </tr>
+                            <tr>
+                                <td>Holder</td>
+                                <td>{{ ticket.reservationItem.reservation.customer ? ticket.reservationItem.reservation.customer.firstName ~ ' ' ~ ticket.reservationItem.reservation.customer.lastName : 'Anonymous sale' }}</td>
+                            </tr>
+                            <tr>
+                                <td>Ticket</td>
+                                <td class="u-mono">{{ ticket.ticketNumber }}</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>{{ ticket.status.value == 'VALID' ? 'Valid' : (ticket.status.value == 'USED' ? 'Used' : 'Void') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

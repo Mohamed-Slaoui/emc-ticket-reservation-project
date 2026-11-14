@@ -1,0 +1,95 @@
+/* ==============================================================================
+   Tickets — the printable sheet the holder takes away, and the counter prints.
+   ========================================================================== */
+
+.tickets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    gap: var(--space-4);
+}
+
+.ticket {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.ticket__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px dashed var(--border);
+}
+
+.ticket__venue {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.ticket__ref {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.ticket__event {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--text);
+    margin: 0;
+}
+
+.ticket__facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin: 0;
+}
+
+.ticket__facts div {
+    min-width: 0;
+}
+
+.ticket__facts dt {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ticket__facts dd {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--text);
+}
+
+.ticket__foot {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: auto;
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--border);
+}
+
+.ticket__claim {
+    font-size: var(--text-xs);
+    color: var(--text);
+    word-break: break-all;
+}
+
+.ticket__note {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}

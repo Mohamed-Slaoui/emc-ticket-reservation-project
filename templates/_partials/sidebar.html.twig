@@ -77,6 +77,12 @@
                     {{ icon('seat') }}
                     <span class="sidebar__label">Box office</span>
                 </a>
+
+                <a class="sidebar__item {{ current_route starts with 'box_office_entry' ? 'sidebar__item--active' }}"
+                   href="{{ path('box_office_entry') }}">
+                    {{ icon('scan') }}
+                    <span class="sidebar__label">Entry</span>
+                </a>
             {% endif %}
 
             <a class="sidebar__item {{ current_route starts with 'booking' ? 'sidebar__item--active' }}"

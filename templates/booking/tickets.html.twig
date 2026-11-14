@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% from '_partials/icons.html.twig' import icon %}
+
+{% block title %}The tickets — {{ reservation.reference }}{% endblock %}
+
+{% block content %}
+    {% include '_components/page_header.html.twig' with {
+        title: 'The tickets',
+        subtitle: reservation.reference ~ ' · ' ~ reservation.performance.event.title ~ ' · ' ~ reservation.performance.startsAt|date('d/m/Y H:i'),
+        action_label: 'Back to the reservation',
+        action_path: path('booking_reservation', {id: reservation.id}),
+        action_icon: 'arrow-left',
+        action_variant: 'outline',
+    } %}
+
+    <div class="form__actions" style="justify-content: flex-end; margin-bottom: var(--space-4);">
+        <button type="button" class="button button--primary" onclick="window.print()">
+            {{ icon('printer', 'icon icon--sm') }}
+            Print the tickets
+        </button>
+    </div>
+
+    <div class="tickets">
+        {% for ticket in tickets %}
+            <article class="ticket">
+                <header class="ticket__head">
+                    <span class="ticket__venue">Théâtre Al-Mansour</span>
+                    <span class="ticket__ref u-mono">{{ ticket.ticketNumber }}</span>
+                </header>
+
+                <h2 class="ticket__event">{{ ticket.reservationItem.reservation.performance.event.title }}</h2>
+
+                <dl class="ticket__facts">
+                    <div>
+                        <dt>Show</dt>
+                        <dd>{{ ticket.reservationItem.reservation.performance.startsAt|date('l j F Y — H:i') }}</dd>
+                    </div>
+                    <div>
+                        <dt>Room</dt>
+                        <dd>{{ ticket.reservationItem.reservation.performance.seatingLayout.room.venue.name }} · {{ ticket.reservationItem.reservation.performance.seatingLayout.room.name }}</dd>
+                    </div>
+                    <div>
+                        <dt>Seat</dt>
+                        <dd class="u-mono">{{ ticket.reservationItem.performancePlace.layoutPlace.place.code }} — {{ ticket.reservationItem.performancePlace.layoutPlace.layoutZone.name }}</dd>
+                    </div>
+                    <div>
+                        <dt>Holder</dt>
+                        <dd>{{ ticket.reservationItem.reservation.customer ? ticket.reservationItem.reservation.customer.firstName ~ ' ' ~ ticket.reservationItem.reservation.customer.lastName : 'Anonymous sale' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Tariff</dt>
+                        <dd>{{ ticket.reservationItem.tariffNameSnapshot }}</dd>
+                    </div>
+                    <div>
+                        <dt>Price</dt>
+                        <dd class="u-mono">{{ ticket.reservationItem.unitPriceSnapshot }} {{ ticket.reservationItem.currencySnapshot }}</dd>
+                    </div>
+                </dl>
+
+                <footer class="ticket__foot">
+                    {# The QR image is delivered with the endroid/qr-code
+                       package; the code below is what it carries. #}
+                    <span class="ticket__claim u-mono">{{ ticket.qrToken }}</span>
+                    <span class="ticket__note">Present this ticket at the entrance — it admits one person, once.</span>
+                </footer>
+            </article>
+        {% endfor %}
+    </div>
+{% endblock %}

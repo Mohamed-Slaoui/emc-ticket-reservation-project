@@ -18,6 +18,29 @@ class TicketRepository extends ServiceEntityRepository
     }
 
     /**
+     * Finds a ticket by its number **or** by its claim code — what the
+     * scanner reads (the number printed on the ticket, or the code the QR
+     * image carries).
+     */
+    public function findByNumberOrClaim(string $code): ?Ticket
+    {
+        $code = trim($code);
+
+        if ('' === $code) {
+            return null;
+        }
+
+        /** @var Ticket|null $ticket */
+        $ticket = $this->createQueryBuilder('t')
+            ->andWhere('t.ticketNumber = :code OR t.qrToken = :code')
+            ->setParameter('code', $code)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $ticket;
+    }
+
+    /**
      * The tickets of a reservation, in creation order.
      *
      * @return list<Ticket>
