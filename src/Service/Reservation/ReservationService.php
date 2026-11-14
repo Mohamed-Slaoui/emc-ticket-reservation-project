@@ -5,10 +5,14 @@ namespace App\Service\Reservation;
 use App\Entity\LayoutZone;
 use App\Entity\Performance;
 use App\Entity\PerformancePlace;
+use App\Entity\Payment;
+use App\Entity\Refund;
 use App\Entity\Reservation;
 use App\Entity\ReservationItem;
+use App\Entity\Ticket;
 use App\Entity\User;
 use App\Enum\InventoryStatus;
+use App\Enum\PaymentStatus;
 use App\Enum\ReservationItemStatus;
 use App\Enum\ReservationStatus;
 use App\Enum\SalesChannel;
@@ -17,10 +21,12 @@ use App\Exception\ReservationEngineException;
 use App\Exception\SeatNotAvailableException;
 use App\Exception\TariffNotAuthorizedException;
 use App\Repository\BookingPolicyRepository;
+use App\Repository\PaymentRepository;
 use App\Repository\PerformancePriceRepository;
 use App\Repository\PerformancePlaceRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\TariffRepository;
+use App\Repository\TicketRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -56,6 +62,7 @@ class ReservationService
         private readonly PerformancePriceRepository $prices,
         private readonly TariffRepository $tariffs,
         private readonly BookingPolicyRepository $policies,
+        private readonly TicketRepository $tickets,
     ) {
     }
 
@@ -323,6 +330,56 @@ class ReservationService
         });
     }
 
+    /**
+     * Cancels a reservation — the administrator's act (Phase 12).
+     *
+     * - a HELD reservation is cancelled and its seats released;
+     * - a CONFIRMED reservation is cancelled, its tickets are voided and a
+     *   full refund is requested for every successful payment (BR-08);
+     * - an expired or already cancelled reservation is refused.
+     */
+    public function cancelReservation(Reservation $reservation, User $actor): void
+    {
+        $this->entityManager->wrapInTransaction(function () use ($reservation, $actor): void {
+            if (!$actor->hasRole(User::ROLE_ADMIN)) {
+                throw new ReservationEngineException('Only an administrator cancels a reservation from the administration.');
+            }
+
+            if (ReservationStatus::Held === $reservation->getStatus()) {
+                foreach ($reservation->getItems() as $item) {
+                    $item->setStatus(ReservationItemStatus::Cancelled);
+                }
+                foreach ($this->itemPlaces($reservation) as $place) {
+                    $place->release();
+                }
+                $reservation->cancel();
+            } elseif (ReservationStatus::Confirmed === $reservation->getStatus()) {
+                foreach ($reservation->getItems() as $item) {
+                    $item->setStatus(ReservationItemStatus::Cancelled);
+                }
+                foreach ($this->tickets->findForReservation($reservation) as $ticket) {
+                    $ticket->void();
+                }
+                foreach ($reservation->getPayments() as $payment) {
+                    if (PaymentStatus::Succeeded === $payment->getStatus()) {
+                        $this->entityManager->persist(new Refund(
+                            $payment,
+                            $payment->getAmount(),
+                            'Reservation cancelled by the administrator.',
+                        ));
+                    }
+                }
+                foreach ($this->itemPlaces($reservation) as $place) {
+                    $place->release();
+                }
+                $reservation->cancel();
+            } else {
+                throw new ReservationEngineException('This reservation is already expired or cancelled.');
+            }
+
+            $this->entityManager->flush();
+        });
+    }
     /**
      * The hold expiry, once and for all, from the booking policy (BR-04).
      */

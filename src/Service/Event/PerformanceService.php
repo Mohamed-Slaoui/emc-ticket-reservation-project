@@ -5,7 +5,13 @@ namespace App\Service\Event;
 use App\Entity\Event;
 use App\Entity\Performance;
 use App\Entity\PerformancePlace;
+use App\Entity\Refund;
+use App\Entity\Ticket;
+use App\Enum\InventoryStatus;
+use App\Enum\PaymentStatus;
 use App\Enum\PerformanceStatus;
+use App\Enum\ReservationItemStatus;
+use App\Enum\ReservationStatus;
 use App\Entity\Room;
 use App\Entity\SeatingLayout;
 use App\Exception\InvalidPerformanceScheduleException;
@@ -15,6 +21,7 @@ use App\Repository\LayoutPlaceRepository;
 use App\Repository\PerformancePlaceRepository;
 use App\Repository\PerformancePriceRepository;
 use App\Repository\PerformanceRepository;
+use App\Repository\TicketRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -40,6 +47,7 @@ class PerformanceService
         private readonly PerformancePlaceRepository $performancePlaces,
         private readonly PerformancePriceRepository $performancePrices,
         private readonly LayoutPlaceRepository $layoutPlaces,
+        private readonly TicketRepository $tickets,
     ) {
     }
 
@@ -116,9 +124,52 @@ class PerformanceService
      */
     public function cancel(Performance $performance): void
     {
-        $performance->setStatus(PerformanceStatus::Cancelled);
+        $this->entityManager->wrapInTransaction(function () use ($performance): void {
+            $performance->setStatus(PerformanceStatus::Cancelled);
 
-        $this->entityManager->flush();
+            // Every reservation of this performance is settled according to
+            // its state: a held reservation is simply expired (the seats go
+            // to BLOCKED with the rest of the show), a confirmed one is
+            // cancelled with a full refund and its tickets are voided.
+            foreach ($performance->getReservations() as $reservation) {
+                if (ReservationStatus::Held === $reservation->getStatus()) {
+                    foreach ($reservation->getItems() as $item) {
+                        $item->setStatus(ReservationItemStatus::Expired);
+                    }
+                    $reservation->expire();
+                } elseif (ReservationStatus::Confirmed === $reservation->getStatus()) {
+                    foreach ($reservation->getItems() as $item) {
+                        $item->setStatus(ReservationItemStatus::Cancelled);
+                    }
+
+                    foreach ($this->tickets->findForReservation($reservation) as $ticket) {
+                        $ticket->void();
+                    }
+
+                    foreach ($reservation->getPayments() as $payment) {
+                        if (PaymentStatus::Succeeded === $payment->getStatus()) {
+                            $this->entityManager->persist(new Refund(
+                                $payment,
+                                $payment->getAmount(),
+                                'Performance cancelled.',
+                            ));
+                        }
+                    }
+
+                    $reservation->cancel();
+                }
+            }
+
+            // The seats are out of sale — even the ones that were already
+            // blocked keep their reason, the others become blocked.
+            foreach ($this->performancePlaces->findForPerformance($performance) as $place) {
+                if (InventoryStatus::Blocked !== $place->getStatus()) {
+                    $place->block('Performance cancelled');
+                }
+            }
+
+            $this->entityManager->flush();
+        });
     }
 
     /**

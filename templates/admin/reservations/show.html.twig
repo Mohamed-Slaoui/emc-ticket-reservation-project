@@ -100,5 +100,18 @@
                 <p class="u-muted u-small" style="margin-top: var(--space-4);">No ticket yet — payment is pending or the reservation is not confirmed.</p>
             {% endif %}
         </div>
+
+        {% if status in ['HELD', 'CONFIRMED'] %}
+            <div class="form__actions" style="margin-top: var(--space-5);">
+                <form method="post" action="{{ path('admin_reservation_cancel', {id: reservation.id}) }}"
+                      data-turbo-confirm="Cancel this reservation?{% if status == 'CONFIRMED' %} A full refund is issued and the tickets are voided.{% endif %}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('cancel_reservation_' ~ reservation.id) }}">
+                    <button type="submit" class="button button--danger" style="margin: 10px 20px">
+                        {{ icon('close', 'icon icon--sm') }}
+                        Cancel this reservation
+                    </button>
+                </form>
+            </div>
+        {% endif %}
     </div>
 {% endblock %}
