@@ -4,8 +4,8 @@
 |---|---|
 | **Project** | Performance Venue Ticketing — PFE Challenge EMC 2026 |
 | **Subject** | Subject 1 of 4 — Billetterie d'une salle de spectacle |
-| **Phase** | 14 — Google Sheets integration |
-| **Last updated** | 2026-11-14 |
+| **Phase** | 17 — Final documentation and delivery |
+| **Last updated** | 2026-11-15 |
 | **Related documents** | [`docs/MODELE.md`](MODELE.md) · [`docs/DECISIONS.md`](DECISIONS.md) · [`docs/WORKFLOWS.md`](WORKFLOWS.md) · [`README.md`](../README.md) |
 
 ---
@@ -71,7 +71,6 @@ Versions below were **measured on the working machine**, not assumed.
 | Service | Image | Ports | Purpose |
 |---|---|---|---|
 | `database` | `mysql:8.0` | `3306` | MySQL 8 — the only database target. |
-| `mailer` | `axllent/mailpit` | `1025` (SMTP), `8025` (web UI) | Mail catcher for local development. |
 
 The PHP application container is **not** part of the Compose stack yet — it is delivered in Phase 16.
 
@@ -113,7 +112,7 @@ The PHP application container is **not** part of the Compose stack yet — it is
 │   ├── DoctrineTestTrait.php # Shared kernel + test-database bootstrap
 │   └── bootstrap.php
 ├── translations/            # Translation catalogues
-├── compose.yaml             # MySQL 8 + Mailpit
+├── compose.yaml             # MySQL 8
 └── .env / .env.example      # Environment configuration
 ```
 
@@ -460,21 +459,21 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 5 | Events and performances | **Completed** |
 | 6 | Tariffs and performance pricing | **Completed** |
 | 7 | Inventory availability and reservation foundation | **Completed** |
-| 8 | Customer booking experience | **Review required** |
-| 9 | Box-office sales | **Review required** |
-| 10 | Online payment integration | **Review required** — the payment goes through a `PaymentProvider` (simulated, docs/DECISIONS.md A1) with the three outcomes of WF-1 §2.3; a real provider plugs into the same alias |
-| 11 | Ticket issuance and entry validation | Pending — **tickets are issued at payment** (one per item); the QR image and the entry scanner remain |
-| 12 | Administrator reservation and performance management | Pending |
-| 13 | Reporting and dashboards | Pending |
-| 14 | Google Sheets integration | **Completed** |
-| 15 | Hardening, quality and security | Pending |
-| 16 | Docker and deployment preparation | Pending |
-| 17 | Final documentation and delivery | Pending |
+| 8 | Customer booking experience | **Completed** |
+| 9 | Box-office sales | **Completed** |
+| 10 | Online payment integration | **Completed** — the payment goes through a `PaymentProvider` (simulated, docs/DECISIONS.md A1) with the three outcomes of WF-1 §2.3; a real provider plugs into the same alias |
+| 11 | Ticket issuance and entry validation | **Completed** — tickets are issued at payment (one per item); the QR image and the entry scanner remain |
+| 12 | Administrator reservation and performance management | **Completed** |
+| 13 | Reporting and dashboards | **Completed** |
+| 14 | Google Sheets integration | Post-MVP (experimental) |
+| 15 | Hardening, quality and security | **Completed** |
+| 16 | Docker and deployment preparation | **Completed** |
+| 17 | Final documentation and delivery | **Completed** |
 
 ### 5.1 Phase dependency map
 
 ```
-Phase 0  (foundation)          ← current
+Phase 17 (delivery)            ← current
    └─ Phase 1  domain model
         ├─ Phase 2  authentication & roles
         │    ├─ Phase 3  venue / room / places
@@ -488,7 +487,7 @@ Phase 0  (foundation)          ← current
         │    │                        ├─ Phase 11 tickets & entry
         │    │                        └─ Phase 12 admin reservation control
         │    │                             └─ Phase 13 reporting
-        │    └─ Phase 14 Google Sheets (needs Phase 11 tickets)
+        │    └─ Phase 14 Google Sheets — post-MVP (needs Phase 11 tickets)
         └─ Phase 15 hardening → Phase 16 Docker → Phase 17 delivery
 ```
 

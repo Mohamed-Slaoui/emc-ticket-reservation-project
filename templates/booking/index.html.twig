@@ -4,6 +4,16 @@
 
 {% block title %}On sale{% endblock %}
 
+{% block hero %}
+    <div class="public-hero">
+        <h1 class="public-hero__title">Find your next show</h1>
+        <p class="public-hero__lead">Browse the programme and book your seats in seconds.</p>
+        {# <div class="public-hero__actions">
+            <a class="button button--primary" href="#programme">Browse programme</a>
+        </div> #}
+    </div>
+{% endblock %}
+
 {% block content %}
     {% if performances is empty %}
         <div class="alert alert--info">
@@ -11,7 +21,7 @@
             <div>No show is on sale yet. The published programme appears here.</div>
         </div>
     {% else %}
-        <h1 class="public-heading">On sale</h1>
+        <h1 class="public-heading" id="programme">On sale</h1>
 
         {% set body %}
             <div class="table-wrap">

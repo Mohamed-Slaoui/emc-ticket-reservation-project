@@ -71,9 +71,9 @@ The domain is split into **seven business areas**. Each area groups concepts tha
 | **Payment & refunds** | `Payment`, `Refund` |
 | **Ticketing** | `Ticket` |
 | **Identity & access** | `User` (roles: `CUSTOMER`, `BOX_OFFICE`, `ADMIN`) |
-| **Integration** | `OutboxMessage` (Google Sheets synchronization) |
+| **Integration** | `OutboxMessage` (Google Sheets synchronization — post-MVP, experimental) |
 
-The Google Sheets integration is treated as a **cross-cutting concern** (outbox), not as a core domain concept.
+The Google Sheets integration is treated as a **post-MVP, cross-cutting concern** (outbox), not as a core domain concept.
 
 ---
 
@@ -89,7 +89,7 @@ This diagram shows the **business concepts** and their dependencies, without imp
 - **Center**: programming - `Event` → `Performance`, which uses a configuration and generates the `PerformancePlace` inventory.
 - **Right**: the purchase journey - `Reservation` → `ReservationItem` → `Ticket`, with `Payment` and `Refund`.
 - **Top right**: `User` and `BookingPolicy`, which control the hold duration.
-- **Bottom right**: `OutboxMessage`, which carries integration events to Google Sheets.
+- **Bottom right**: `OutboxMessage`, which carries integration events to Google Sheets (post-MVP).
 
 ### 3.2 Key distinction
 
@@ -129,7 +129,7 @@ This is the model's reason for being: **reusing the venue from one event to anot
 | `Payment` | Payment attempt (can fail, can be retried). |
 | `Refund` | Refund linked to a payment. |
 | `Ticket` | Admission ticket (number + QR token) issued after confirmation. |
-| `OutboxMessage` | Asynchronous integration event (Google Sheets). |
+| `OutboxMessage` | Asynchronous integration event (Google Sheets — post-MVP). |
 
 ### 4.2 Explained relationships
 
@@ -355,7 +355,7 @@ Because a prior availability check does not prevent two simultaneous requests fr
 
 ### C5 - Why a transactional outbox?
 
-Because a sale must not depend on Google Sheets being available. The event is written to `outbox_message` in the **same transaction** as the sale, then processed by a worker with an idempotency key and retries on failure.
+Because a sale must not depend on an outbox outage. The event is written to `outbox_message` in the **same transaction** as the sale, then processed by a worker with an idempotency key and retries on failure. The worker and Google Sheets integration are **post-MVP, experimental**.
 
 ### C6 - Why one performance per reservation?
 

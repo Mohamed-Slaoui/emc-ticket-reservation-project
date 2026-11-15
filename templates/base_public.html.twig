@@ -50,6 +50,8 @@
         </div>
     </header>
 
+    {% block hero %}{% endblock %}
+
     <main class="public-main" id="main-content">
         {% include '_components/flash.html.twig' %}
 
@@ -57,7 +59,7 @@
     </main>
 
     <footer class="public-footer">
-        <span>EMC Ticketing · Casablanca</span>
+        <span>EMC Ticketing</span>
         <span class="public-footer__spacer"></span>
         <span>Book tickets for events online.</span>
     </footer>

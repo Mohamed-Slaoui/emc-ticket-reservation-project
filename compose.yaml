@@ -20,6 +20,20 @@ services:
       - database_data:/var/lib/mysql:rw
 ###< doctrine/doctrine-bundle ###
 
+  app:
+    build: .
+    ports:
+      - "${APP_PORT:-8000}:80"
+    environment:
+      DATABASE_URL: "mysql://${MYSQL_USER:-app}:${MYSQL_PASSWORD:-!ChangeMe!}@database:3306/${MYSQL_DATABASE:-app}?serverVersion=8.0"
+      APP_ENV: prod
+      APP_SECRET: ${APP_SECRET:-change-me-in-production}
+      DEFAULT_URI: "http://localhost:${APP_PORT:-8000}"
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
 ###> doctrine/doctrine-bundle ###
   database_data:

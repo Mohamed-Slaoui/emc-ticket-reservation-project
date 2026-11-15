@@ -103,7 +103,8 @@ COMMIT
 ```
 
 The customer receives the confirmation and can download the tickets. The outbox worker
-picks the events up asynchronously and writes **one row per ticket** to Google Sheets.
+picks the events up asynchronously and writes **one row per ticket** to Google Sheets
+(post-MVP, experimental).
 
 #### (b) Payment fails
 
@@ -208,7 +209,7 @@ transaction is rolled back and the employee is shown which places are unavailabl
 | 8 | Configure the hold duration | Default 10 minutes; **new holds only** |
 | 9 | Publish the event | **Validated** before publication |
 | 10 | Open the dashboard | Occupancy and revenue |
-| 11 | Monitor the Google Sheets synchronisation | Pending / sent / failed events |
+| 11 | Monitor the Google Sheets synchronisation (post-MVP) | Pending / sent / failed events |
 
 ### 4.2 Publication is validated
 
@@ -350,7 +351,7 @@ No record is deleted — history is preserved for accounting and traceability (Q
 At expiry, the reservation moves to `EXPIRED`, the `performance_place` rows return to
 `AVAILABLE`, and the historical `reservation_item` rows are **kept**.
 
-### 7.3 Google Sheets synchronisation
+### 7.3 Google Sheets synchronisation (post-MVP, experimental)
 
 **Phase:** 14
 
@@ -362,8 +363,13 @@ sale transaction
 ```
 
 The idempotency key is derived from the ticket identifier, so a retry **never** creates a
-duplicate row. A Google Sheets outage neither blocks nor rolls back a successful sale
+duplicate row. An outbox outage neither blocks nor rolls back a successful sale
 (INV-12).
+
+This integration is **post-MVP** — not part of the MVP scope, not required for the
+application to run or for its core ticketing workflows, and not production-verified.
+Further configuration, integration testing and validation are required before production
+use.
 
 ---
 

@@ -19,6 +19,44 @@
     position: sticky;
     top: 0;
     z-index: 20;
+    box-shadow: 0 1px 0 var(--border), 0 4px 12px -8px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(8px);
+}
+
+.public-hero {
+    width: min(72rem, 100%);
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong, var(--accent)) 100%);
+    color: #fff;
+    border-radius: var(--radius-lg);
+    margin-top: var(--space-6);
+    box-shadow: 0 12px 32px -16px rgba(0, 0, 0, 0.25);
+}
+
+.public-hero__title {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl, var(--text-2xl));
+    font-weight: var(--weight-bold);
+    margin: 0;
+    color: #fff;
+}
+
+.public-hero__lead {
+    font-size: var(--text-base);
+    max-width: 60ch;
+    margin: 0;
+    opacity: 0.9;
+}
+
+.public-hero__actions {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-top: var(--space-2);
 }
 
 .public-bar__brand {

@@ -8,7 +8,7 @@ built for the **PFE Challenge EMC**.
 | **Subject** | **Subject 1 of 4 — Performance Venue Ticketing** |
 | **Stack** | Symfony 7.4 · PHP 8.2+ · MySQL 8 · Doctrine ORM · Migrations · Twig |
 | **Deadline** | Sunday, November 15, 2026 at 23:59 (Morocco time) |
-| **Status** | 🟡 **Phase 2 complete — authentication and administration UI** |
+| **Status** | ✅ **All 18 phases complete — delivery ready** |
 
 ---
 
@@ -56,7 +56,7 @@ engine that serves the box office and the website through **the same allocation 
 | Async | Symfony Messenger (Doctrine transport) | 7.4 |
 | Tests | PHPUnit | 11.5 |
 | Container | Docker Compose | — |
-| Integration | Google Sheets API | — |
+| Integration | Google Sheets API | post-MVP (experimental) |
 
 ## 5. Main features
 
@@ -86,8 +86,14 @@ validation with **single use**.
 ### Monitoring
 Dashboard: occupancy by performance and zone, gross and net revenue, revenue by tariff.
 
-### Integration
-Asynchronous, idempotent Google Sheets synchronisation — one row per ticket.
+### Integration — post-MVP (experimental)
+
+Asynchronous, idempotent Google Sheets synchronisation — one row per ticket. This
+integration was implemented as a post-MVP feature. It is **not required** for the
+application to run or for its core ticketing workflows, and it has **not** been
+thoroughly tested or validated end-to-end. It should be considered **experimental /
+not production-verified**; further configuration, integration testing and validation
+are required before production use.
 
 ## 6. User roles and permissions
 
@@ -138,19 +144,19 @@ filters and the chosen size, so moving to another page never loses the context.
    Browser  ───────►│  Symfony application                     │
                     │                                          │
                     │  Controller  →  Service  →  Entity       │
-                    │      │           │           │          │
-                    │      │           │           │          │
-                    │      ▼           ▼           ▼          │
+                    │      │           │           │           │
+                    │      │           │           │           │
+                    │      ▼           ▼           ▼           │
                     │   Form/DTO    Validation   Doctrine      │
                     │                                  │       │
                     └──────────────────────────────────┼───────┘
                                                        ▼
                                                   MySQL 8
                                                        ▲
-                    ┌──────────────────────────────────┼───────┐
-                    │  Messenger worker (outbox)       │       │
-                    │  OutboxMessage → Google Sheets  │       │
-                    └──────────────────────────────────────────┘
+                    ┌──────────────────────────────────┼────────┐
+                    │  Messenger worker (outbox, post-MVP)      │       
+                    │  OutboxMessage → Google Sheets  (post-MVP)│       
+                    └───────────────────────────────────────────┘
 ```
 
 **Three design decisions shape everything:**
@@ -213,11 +219,35 @@ The full model, with its rationale, is in [`docs/MODELE.md`](docs/MODELE.md).
 │   ├── Integration/         # Repositories, persistence, transactions
 │   └── Functional/          # HTTP routes, forms, authorisation
 ├── translations/            # Translation catalogues
-├── compose.yaml             # MySQL 8 + Mailpit
+├── compose.yaml             # MySQL 8
 └── .env / .env.example      # Environment configuration
 ```
 
 ## 10. Installation and startup
+
+### 10.1 Dockerized app (database + application in containers)
+
+For a clean, self-contained run with no host-installed PHP:
+
+```bash
+# 1. Stop any previous containers and rebuild the application image
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+
+# 2. First run (or after schema changes): apply migrations and load demo data
+docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
+docker compose exec app php bin/console doctrine:fixtures:load --no-interaction
+```
+
+The application is then reachable on <http://localhost:8000>.
+
+> **`DEFAULT_URI`**. The `.env` sets `DEFAULT_URI=http://localhost`. When browsing
+> through the mapped port (`localhost:8000`), the generated redirect URLs may use
+> port 80. Override it in `.env.local` with `DEFAULT_URI=http://localhost:8000` if
+> redirects land on the wrong port.
+
+### 10.2 Host app (regular installation)
 
 **Prerequisites:** PHP 8.2+ with `pdo_mysql` and `bcmath`, Composer 2, and Docker
 (with Compose) for the database.
@@ -226,7 +256,7 @@ The full model, with its rationale, is in [`docs/MODELE.md`](docs/MODELE.md).
 # 1. Install the dependencies
 composer install
 
-# 2. Start MySQL 8 and Mailpit
+# 2. Start MySQL 8
 docker compose up -d database
 
 # 3. Create the database
@@ -242,8 +272,7 @@ php bin/console doctrine:fixtures:load
 php -S localhost:8000 -t public
 ```
 
-The application is then reachable on <http://localhost:8000>, and Mailpit on
-<http://localhost:8025>.
+The application is then reachable on <http://localhost:8000>.
 
 > **Current state.** The schema, the demo data and the application all boot from a fresh
 > clone. The demo data covers the whole domain: two venues, three rooms over two layout
@@ -251,7 +280,7 @@ The application is then reachable on <http://localhost:8000>, and Mailpit on
 > zone and every tariff, and an account for every role. Re-running the fixtures **wipes
 > and re-seeds the database** — only in development, and deliberately not in tests.
 
-## 10.1 The demo data
+## 10.3 The demo data
 
 The fixtures (`src/DataFixtures/AppFixtures.php`) load in development; the testing
 environment reloads them per test — the same file, the same contents, every time.
@@ -338,34 +367,48 @@ depends on MySQL-specific behaviour. The database must therefore be running firs
 
 ## 14. Running the asynchronous workers
 
-The Google Sheets synchronisation runs out of band, through a Symfony Messenger worker
-that drains the transactional outbox.
+The hold-expiry worker (`app:holds:expire`) is part of the core reservation workflow:
+it releases unpaid holds and puts their seats back on sale. It is intended to be called
+by the system scheduler — every minute is a good interval. Calling it when nothing
+expired is a no-op.
 
 ```bash
-php bin/console app:outbox:process
 php bin/console app:holds:expire
 ```
 
-The outbox worker is safe to run concurrently: each message is claimed atomically
-and the idempotency key prevents duplicate rows in Google Sheets. Run it every
-minute (alongside `app:holds:expire`) from the scheduler.
+The outbox worker (`app:outbox:process`) drains the transactional outbox to Google
+Sheets. It is a **post-MVP, experimental** feature — not required for the application
+to run, and not production-verified. It should only be enabled after further
+configuration, integration testing and validation.
+
+```bash
+php bin/console app:outbox:process
+```
+
+The outbox worker is safe to run concurrently: each message is claimed atomically and
+the idempotency key prevents duplicate rows in Google Sheets.
 
 > **Current state (Phase 0).** The Messenger transport is configured and the
 > `messenger_messages` table is created by the migrations, but the outbox itself arrives
 > with the domain model in Phase 1 and the worker is exercised in Phase 14.
 
-## 15. Google Sheets integration
+## 15. Google Sheets integration — post-MVP (experimental)
 
-One row per **ticket**, written asynchronously.
+One row per **ticket**, written asynchronously via the transactional outbox pattern.
 
-The sale transaction also writes an `outbox_message` row — in the **same** transaction. A
-Google Sheets outage therefore never blocks nor rolls back a successful sale. The worker
-retries failed messages with a backoff, counts the attempts, and uses the ticket
-identifier as the idempotency key so a retry can never duplicate a row.
+The sale transaction writes an `outbox_message` row — in the **same** transaction. A
+Google Sheets outage therefore never blocks nor rolls back a successful sale (INV-12).
+The worker retries failed messages with a backoff, counts the attempts, and uses the
+ticket identifier as the idempotency key so a retry can never duplicate a row.
+
+This integration was implemented as an additional post-MVP feature. It is **not part of
+the MVP scope**, is **not required** for the application to run or for its core
+ticketing workflows, and has **not** been thoroughly tested or validated end-to-end.
+It should be considered **experimental / not production-verified**. Further
+configuration, integration testing and validation are required before production use.
 
 Credentials come from a Google service account and are supplied through the environment
-(`GOOGLE_APPLICATION_CREDENTIALS`), never committed. The feature is delivered in the
-integration phase; the design is documented in
+(`GOOGLE_APPLICATION_CREDENTIALS`), never committed. The design is documented in
 [`docs/DECISIONS.md`](docs/DECISIONS.md) §3.7.
 
 ## 16. Documentation
@@ -393,17 +436,17 @@ Status legend: `Pending` · `In progress` · `Review required` · `Completed`.
 | 4 | Seating layouts and zones | **Completed** |
 | 5 | Events and performances | **Completed** |
 | 6 | Tariffs and pricing | **Completed** |
-| 7 | Reservation foundation | **Review required** |
-| 8 | Customer booking | **Review required** |
-| 9 | Box-office sales | **Review required** |
-| 10 | Online payments | **Review required** |
-| 11 | Tickets and entry | Pending |
-| 12 | Administrative controls | Pending |
-| 13 | Reporting | Pending |
-| 14 | Google Sheets | **Completed** |
-| 15 | Hardening and security | Pending |
-| 16 | Docker and deployment | Pending |
-| 17 | Final delivery | Pending |
+| 7 | Reservation foundation | **Completed** |
+| 8 | Customer booking | **Completed** |
+| 9 | Box-office sales | **Completed** |
+| 10 | Online payments | **Completed** |
+| 11 | Tickets and entry | **Completed** |
+| 12 | Administrative controls | **Completed** |
+| 13 | Reporting | **Completed** |
+| 14 | Google Sheets integration | Post-MVP (experimental) |
+| 15 | Hardening and security | **Completed** |
+| 16 | Docker and deployment | **Completed** |
+| 17 | Final delivery | **Completed** |
 
 **What exists today**
 

@@ -24,7 +24,7 @@
 
 ### 2026-11-09 - Domain analysis and modeling
 
-- Identified the **seven business areas**: venue & seating, programming, pricing, inventory & reservations, payment & refunds, ticketing, identity & access; the Google Sheets integration is treated as a cross-cutting concern.
+- Identified the **seven business areas**: venue & seating, programming, pricing, inventory & reservations, payment & refunds, ticketing, identity & access; the Google Sheets integration is treated as a post-MVP, cross-cutting concern.
 - **Structuring decision:** separate **three levels** - `Place` (physical), `LayoutPlace` (configuration), and `PerformancePlace` (sellable inventory). This is the key that allows reusing the room without duplicating seats or losing history.
 - **Decision:** `Place` belongs to the `Room`; a `SeatingLayout` **maps** existing seats via `LayoutPlace` rather than creating new seats. A configuration is **versioned** and unmodifiable once used.
 - **Decision:** a `Performance` references a `SeatingLayout` (not a free list of seats), allowing a different configuration per performance (standing pit, conference setup, etc.).
@@ -43,7 +43,7 @@ Validated the following rules (detailed in section 3):
 - Cancellation of a confirmed reservation: **administrator only, full refund**.
 - Group tariff: **minimum 5 seats**, all at the group rate.
 - Reduced tariff: **verified by box office/admin**, no online self-declaration.
-- Google Sheets: **one row per ticket**, asynchronous idempotent synchronization.
+- Google Sheets: **one row per ticket**, asynchronous idempotent synchronization (post-MVP, experimental).
 
 ### 2026-11-10 - Phase 0: technical foundation
 
@@ -67,8 +67,8 @@ rule was changed by this phase.
     behaviour; a second database backend would give false confidence.
 - **Decision:** use a **transactional outbox** (already validated on 2026-11-09) rather
   than dispatching a Messenger message directly from the sale.
-  - *Justification:* the outbox row is written in the same transaction as the sale, so a
-    Google Sheets outage can neither block nor roll back a successful sale (INV-12).
+  - *Justification:* the outbox row is written in the same transaction as the sale, so an
+    outbox outage can neither block nor roll back a successful sale (INV-12).
 
 ---
 
@@ -282,7 +282,7 @@ The five questions from the specification, with the chosen answer and its justif
   and all tariff write paths were removed. A fifth category is a deliberate, reviewed change
   (code + migration) — never something the interface can do.
 
-### 2026-11-14 - The outbox worker drains to Google Sheets
+### 2026-11-14 - The outbox worker (post-MVP)
 
 - **Decision:** the outbox worker is a synchronous console command (`app:outbox:process`)
   run by the scheduler, not a Symfony Messenger consumer. The `MESSENGER_TRANSPORT_DSN`
@@ -292,9 +292,12 @@ The five questions from the specification, with the chosen answer and its justif
   replaces the alias in `config/services.yaml` only.
 - **Decision:** each message is claimed atomically (`PENDING → PROCESSING`), sent, then
   marked `SENT`; on failure it is marked `FAILED` with a 30-second backoff and retried
-  later. A Google Sheets outage therefore never blocks or cancels a sale (INV-12).
+  later. An outbox outage therefore never blocks or cancels a sale (INV-12).
+- **Decision:** the outbox worker and Google Sheets integration are **post-MVP,
+  experimental** features — not required for the application to run, and not
+  production-verified.
 - **Decision:** the scheduler also runs `app:holds:expire` every minute to release unpaid
-  holds (BR-05).
+  holds (BR-05). This is part of the core reservation workflow.
 ### Q5. Who is allowed to sell which tariff?
 
 > **Answer: Rights depend on the tariff and the role. The online channel is reserved for the full tariff; reduced, group, and invitation tariffs go through the box office or an admin.**
@@ -352,12 +355,14 @@ The five questions from the specification, with the chosen answer and its justif
 - **Net revenue** = gross − successful refunds.
 - Pending or failed payments do not count.
 
-### 3.7 Google Sheets integration (level 4)
+### 3.7 Google Sheets integration (post-MVP, experimental)
 
 - **One row per ticket** (not per reservation), for fine-grained tracking.
 - **Asynchronous** synchronization via the **transactional outbox** pattern: the event is written to `outbox_message` in the same transaction as the sale, then processed by a worker.
 - **Idempotency key** based on the ticket identifier.
-- Retry on failure; a Google Sheets outage neither blocks nor cancels a sale.
+- Retry on failure; an outbox outage neither blocks nor cancels a sale.
+
+This integration is **post-MVP** — not part of the MVP scope, not required for the application to run, and not production-verified. Further configuration, integration testing and validation are required before production use.
 
 ### 3.8 Identity and roles
 
@@ -383,7 +388,7 @@ The five questions from the specification, with the chosen answer and its justif
 | BR-11 | Reduced, group, and invitation tariffs require seller authorization. |
 | BR-12 | The group tariff requires a minimum of 5 seats, all at the group rate. |
 | BR-13 | A ticket is unique and can be used only once. |
-| BR-14 | Google Sheets is updated asynchronously and idempotently. |
+| BR-14 | Google Sheets is updated asynchronously and idempotently (post-MVP). |
 
 ---
 
@@ -407,7 +412,7 @@ These points are **excluded** from the first version to guarantee a solid delive
 | # | Assumption / attention | Impact |
 |---|---|---|
 | A1 | The online payment provider is **not** imposed. The MVP provides a simulated payment plus a "cash / terminal" mode at the box office. | To be confirmed before level 4. |
-| A2 | Google Sheets is the external API imposed for level 4. | Requires a Google Cloud project (service account). |
+| A2 | Google Sheets is the external API for level 4 (post-MVP). | Requires a Google Cloud project (service account). Not production-verified. |
 | A3 | The venue will initially contain a single `Room`. | The model remains ready for multiple rooms. |
 | A4 | Reduced-tariff eligibility is checked **in person**. | No online supporting-document workflow. |
 | A5 | QR codes are **opaque tokens** (no personal data encoded). | Compliance and security. |
