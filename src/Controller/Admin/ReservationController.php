@@ -6,6 +6,7 @@ use App\Entity\Reservation;
 use App\Exception\ReservationEngineException;
 use App\Repository\ReservationRepository;
 use App\Repository\TicketRepository;
+use App\Service\Booking\PerformanceLabelService;
 use App\Service\Reservation\ReservationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -22,12 +23,18 @@ use Symfony\Component\Routing\Attribute\Route;
 class ReservationController extends AbstractController
 {
     #[Route('', name: 'admin_reservations', methods: ['GET'])]
-    public function index(ReservationRepository $reservations): Response
+    public function index(ReservationRepository $reservations, PerformanceLabelService $labels): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
+        $recent = $reservations->findRecent();
+
         return $this->render('admin/reservations/index.html.twig', [
-            'reservations' => $reservations->findRecent(),
+            'reservations' => $recent,
+            'labels' => $labels->labelsFor(array_map(
+                static fn (Reservation $reservation): \App\Entity\Performance => $reservation->getPerformance(),
+                $recent,
+            )),
         ]);
     }
 

@@ -32,7 +32,7 @@
                             <td class="u-mono u-nowrap">{{ reservation.reference }}</td>
                             <td>
                                 <div class="table__identity-text">
-                                    <div class="table__identity-name">{{ reservation.performance.event.title }}</div>
+                                    <div class="table__identity-name">{{ labels[reservation.performance.id]|default(reservation.performance.event.title) }}</div>
                                     <div class="table__identity-mail u-mono">{{ reservation.performance.startsAt|date('d/m/Y H:i') }}</div>
                                 </div>
                             </td>
