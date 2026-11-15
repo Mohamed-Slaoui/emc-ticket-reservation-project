@@ -230,14 +230,19 @@ The full model, with its rationale, is in [`docs/MODELE.md`](docs/MODELE.md).
 For a clean, self-contained run with no host-installed PHP:
 
 ```bash
-# 1. Stop any previous containers and rebuild the application image
+# 1. Stop any previous containers and rebuild from scratch
 docker compose down
 docker compose build --no-cache
 docker compose up -d
 
-# 2. First run (or after schema changes): apply migrations and load demo data
+# 2. Apply migrations
 docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
-docker compose exec app php bin/console doctrine:fixtures:load --no-interaction
+
+# 3. Seed demo data
+docker compose exec app php bin/console doctrine:fixtures:load --env=dev --no-interaction
+
+# 4. Expire any holds that are already past due (Optional) 
+docker compose exec app php bin/console app:holds:expire
 ```
 
 The application is then reachable on <http://localhost:8000>.
